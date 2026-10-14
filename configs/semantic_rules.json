@@ -1,0 +1,61 @@
+{
+  "semantic_version": "SEM-1.0.0",
+  "updated": "2026-10-15",
+  "note": "AgroLake P0 语义字典与单位口径。规则可审阅、带版本；保留原始值，只对已定义别名与单位做标准化。",
+  "field_aliases": {
+    "scene_id": ["scene_id", "scene", "sceneid", "场景", "场景编号", "场景ID"],
+    "field_id": ["field_id", "field", "fieldid", "plot", "plot_id", "地块", "地块编号", "田块", "田块编号"],
+    "crop": ["crop", "crop_type", "作物", "作物类型", "作物名称"],
+    "area": ["area", "area_value", "面积", "面积值"],
+    "area_unit": ["area_unit", "unit", "单位", "面积单位"],
+    "category": ["category", "category_name", "land_cover", "地物类别", "地物类型", "类别"]
+  },
+  "asset_identity": {
+    "definition": "业务资产身份 = (规范化文件名, 声明场景 declared_scene_id, 声明来源 source)",
+    "key_fields": ["filename_lower", "declared_scene_id", "source"],
+    "rule": "文件名、场景、来源三者共同决定业务资产。同名文件出现在不同场景或不同来源时，视为不同独立资料，不作为同一资产的版本更新。只有同名、同场景、同来源的新内容才形成该资产的新版本。跨文件名的完全相同内容仍按内容哈希识别为一处重复，只保留一个有效内容版本。",
+    "note": "场景与来源在导入后仍可补正；补正改变的是当前归属与状态，不重建历史导入事件。"
+  },
+  "category_vs_crop": {
+    "note": "地物类别(category_aliases，如田块/道路/沟渠)与作物类别(crop，如水稻)是两套口径，不得混用或互相替代。未知地物类别保留原值并报告，不凭空识别作物。"
+  },
+  "category_aliases": {
+    "FIELD": ["田块", "地块", "field", "plot", "FIELD", "cropland"],
+    "FIELD_BOUNDARY": ["田埂", "田界", "field_boundary", "ridge", "boundary"],
+    "ROAD": ["道路", "路", "road", "track"],
+    "DITCH": ["沟渠", "水渠", "ditch", "canal", "drain"]
+  },
+  "units": {
+    "m2": {
+      "canonical": "m2",
+      "factor_to_m2": 1.0,
+      "aliases": ["m2", "m²", "㎡", "sqm", "square_meter", "square_meters", "平方米", "平米"]
+    },
+    "ha": {
+      "canonical": "m2",
+      "factor_to_m2": 10000.0,
+      "aliases": ["ha", "hectare", "hectares", "公顷"]
+    },
+    "mu": {
+      "canonical": "m2",
+      "factor_to_m2": 666.6666666666666,
+      "aliases": ["mu", "亩"]
+    }
+  },
+  "metrics": {
+    "quality_pass_rate": {
+      "metric_id": "quality_pass_rate",
+      "definition": "当前有效资产版本中总体质检为通过的版本数 ÷ (通过+警告+阻断)版本数",
+      "denominator": "存在可适用质检规则的有效资产版本（排除已隔离与重复标记版本，排除全部规则均为不适用的版本）",
+      "unit": "ratio",
+      "exclude": "isolated、duplicate、无适用规则的版本"
+    },
+    "association_coverage": {
+      "metric_id": "association_coverage",
+      "definition": "场景清单中影像、属性、文本三类均已关联的场景数 ÷ 场景清单总场景数",
+      "denominator": "场景清单中的全部 scene_id",
+      "unit": "ratio",
+      "exclude": "无"
+    }
+  }
+}

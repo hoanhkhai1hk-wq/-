@@ -1,0 +1,10 @@
+# AgroLake P0 直接依赖（固定版本）
+# 运行环境：.venv-p0 (Python 3.11.15)
+# 依据：官方 PyPI 元数据。检出日期 2026-10-15。
+#   streamlit 1.50.0  requires_python: !=3.9.7,>=3.9
+#   pillow    11.3.0  requires_python: >=3.9
+# 说明：仅安装 Streamlit 与 Pillow 两个直接依赖及其必要传递依赖，
+#       不安装 GDAL、MinIO、MySQL、rasterio 或可选地图全套。
+#       传递依赖的实测解析结果见 requirements-p0.lock.txt。
+streamlit==1.50.0
+Pillow==11.3.0

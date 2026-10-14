@@ -1,0 +1,18 @@
+{
+  "rules_version": "QR-1.0.0",
+  "updated": "2026-10-15",
+  "note": "AgroLake P0 质量规则。结果分为 pass/warn/block/na。启发式清晰度规则固定预览尺度、阈值与适用范围，仅作提示，不作为导航或业务可用性判定。",
+  "sharpness": {
+    "rule_id": "sharpness",
+    "preview_max_side": 512,
+    "band": "L",
+    "warn_below": 80.0,
+    "block_below": 20.0,
+    "applies_to": "可解码的普通图像(JPG/PNG)",
+    "note": "固定将最长边缩放到不超过 preview_max_side 后计算灰度拉普拉斯方差；阈值未用真实农业样本校准，仅作提示。"
+  },
+  "limits": {
+    "max_file_bytes": 104857600,
+    "max_image_pixels": 80000000
+  }
+}
