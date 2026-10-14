@@ -1,0 +1,50 @@
+# Local runtimes and build output
+.venv*/
+.conda*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Local data, trained artifacts, logs and private collaboration material
+data/
+models/
+samples/
+reports/
+work/
+outputs/
+.workbuddy/
+SHARED_MEMORY.md
+WORKBUDDY.md
+AGENTS.md
+docs/参考材料清单.md
+
+# Credentials and originals
+.env
+.env.*
+!.env.example
+secrets.toml
+*.pem
+*.key
+*.p12
+*.docx
+*.pdf
+*.ckpt
+*.pt
+*.pth
+*.tif
+*.tiff
+*.sqlite*
+*.db
+*.log
+*.zip
+
+# OS/editor residue
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
