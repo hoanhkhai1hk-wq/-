@@ -49,3 +49,6 @@ Desktop.ini
 .vscode/
 .idea/
 .playwright-mcp/
+
+# Historical FTW experiments: retained locally, excluded from reviewed releases
+scripts/ftw_smoke/
