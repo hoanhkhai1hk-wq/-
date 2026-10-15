@@ -17,6 +17,7 @@ import http.client
 import json
 import math
 import os
+import re
 import socket
 from urllib.parse import urlsplit
 
@@ -39,6 +40,12 @@ FIXED_ARTIFACTS = (
     "field_pixels.csv",
     "run.json",
 )
+
+# 人工复核结论枚举与字段上限（与 agrolake_service.reviews 保持一致）。
+REVIEW_DECISIONS = ("accepted", "questioned", "rejected")
+MAX_REVIEWER_LEN = 80
+MAX_NOTE_LEN = 2000
+MAX_REVIEW_PAGE = 200
 
 
 class ApiError(Exception):
@@ -197,6 +204,138 @@ class RecognitionClient:
                     detail=f"expected={expected_sha256} actual={actual}",
                 )
         return data
+
+    # ---- 人工复核 ---------------------------------------------------------
+
+    def submit_review(self, job_id: int, *, decision: str, reviewer: str, note: str,
+                      request_id: str, field_id: int | None = None,
+                      timeout: float | None = None) -> dict:
+        """POST /jobs/<id>/reviews。本地先做与接口一致的基本校验，再提交。"""
+        job_id = self._job_id(job_id)
+        if decision not in REVIEW_DECISIONS:
+            raise ApiError("protocol", f"复核结论非法：{decision!r}")
+        if not isinstance(reviewer, str) or not reviewer.strip():
+            raise ApiError("protocol", "复核人不能为空")
+        if len(reviewer.strip()) > MAX_REVIEWER_LEN:
+            raise ApiError("protocol", f"复核人超过 {MAX_REVIEWER_LEN} 字符")
+        if not isinstance(note, str) or not note.strip():
+            raise ApiError("protocol", "复核原因不能为空")
+        if len(note.strip()) > MAX_NOTE_LEN:
+            raise ApiError("protocol", f"复核原因超过 {MAX_NOTE_LEN} 字符")
+        if not isinstance(request_id, str) or not request_id:
+            raise ApiError("protocol", "缺少请求号，无法保证幂等。")
+        if field_id is not None and (type(field_id) is not int or field_id <= 0):
+            raise ApiError("protocol", f"区域编号非法：{field_id!r}")
+
+        payload = {
+            "decision": decision,
+            "reviewer": reviewer.strip(),
+            "note": note.strip(),
+            "request_id": request_id,
+        }
+        if field_id is not None:
+            payload["field_id"] = field_id
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        result = self._request_json(
+            "POST", f"/jobs/{job_id}/reviews", body=body,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            timeout=timeout if timeout is not None else self.timeout,
+        )
+        record = self._validate_review(result)
+        expected = {'job_id':job_id, 'field_id':field_id, 'decision':decision,
+                    'reviewer':reviewer.strip(), 'note':note.strip(), 'request_id':request_id}
+        if any(record.get(k) != v for k, v in expected.items()) or type(result.get('created')) is not bool:
+            raise ApiError('protocol', '复核回执与本次填写不一致，请使用同一请求号重试确认。')
+        return result
+
+    def list_reviews(self, job_id: int, *, after_id: int | None = None,
+                     limit: int | None = None, until_id: int | None = None) -> dict:
+        """GET /jobs/<id>/reviews（可带 after_id/limit 分页）。"""
+        job_id = self._job_id(job_id)
+        query = []
+        if after_id is not None:
+            if type(after_id) is not int or after_id < 0:
+                raise ApiError("protocol", f"after_id 非法：{after_id!r}")
+            query.append(f"after_id={after_id}")
+        if limit is not None:
+            if type(limit) is not int or not 0 < limit <= MAX_REVIEW_PAGE:
+                raise ApiError("protocol", f"limit 非法：{limit!r}")
+            query.append(f"limit={limit}")
+        if until_id is not None:
+            if type(until_id) is not int or not 0 <= until_id <= 9223372036854775807:
+                raise ApiError('protocol', '复核快照编号非法。')
+            query.append(f'until_id={until_id}')
+        path = f"/jobs/{job_id}/reviews" + (("?" + "&".join(query)) if query else "")
+        result = self._request_json("GET", path)
+        if result.get("job_id") != job_id:
+            raise ApiError("protocol", "识别服务返回了其他任务的复核记录，已停止展示。")
+        reviews = result.get("reviews")
+        pagination = result.get("pagination")
+        if not isinstance(reviews, list) or not isinstance(pagination, dict):
+            raise ApiError("protocol", "复核记录响应结构不符合约定。")
+        previous = after_id or 0
+        for row in reviews:
+            self._validate_review(row)
+            if row['job_id'] != job_id or row['review_id'] <= previous:
+                raise ApiError('protocol', '复核历史的任务或记录顺序不符合约定。')
+            previous = row['review_id']
+        bound = pagination.get('until_id')
+        total = result.get('total')
+        has_more = pagination.get('has_more')
+        next_id = pagination.get('next_after_id')
+        if (type(bound) is not int or not 0 <= bound <= 9223372036854775807
+                or (until_id is not None and bound != until_id)
+                or any(r['review_id'] > bound for r in reviews)
+                or type(total) is not int or total < len(reviews)
+                or type(has_more) is not bool
+                or pagination.get('after_id') != (after_id or 0)
+                or pagination.get('limit') != (limit or MAX_REVIEW_PAGE)
+                or pagination.get('returned') != len(reviews)
+                or len(reviews) > (limit or MAX_REVIEW_PAGE)
+                or (has_more and (not reviews or type(next_id) is not int or next_id != previous))
+                or (not has_more and next_id is not None)):
+            raise ApiError('protocol', '复核分页响应不完整，不能确认已取全。')
+        latest = result.get('latest')
+        if not isinstance(latest, dict) or not isinstance(latest.get('regions'), dict):
+            raise ApiError('protocol', '复核当前意见响应结构不符合约定。')
+        task = latest.get('task')
+        current = []
+        if task is not None:
+            self._validate_review(task)
+            if task['field_id'] is not None:
+                raise ApiError('protocol', '任务整体意见混入了区域意见。')
+            current.append(task)
+        for key, row in latest['regions'].items():
+            self._validate_review(row)
+            if row['field_id'] is None or key != str(row['field_id']):
+                raise ApiError('protocol', '复核区域意见与区域编号不一致。')
+            current.append(row)
+        if any(r['job_id'] != job_id or r['review_id'] > bound for r in current):
+            raise ApiError('protocol', '当前意见不属于本任务的复核快照。')
+        return result
+
+    @staticmethod
+    def _validate_review(record) -> dict:
+        if not isinstance(record, dict):
+            raise ApiError("protocol", "复核记录不是对象，已停止展示。")
+        review_id = record.get("review_id")
+        if type(review_id) is not int or review_id <= 0:
+            raise ApiError("protocol", "复核记录缺少合法 review_id。")
+        if type(record.get("job_id")) is not int or not 0 < record['job_id'] <= 9223372036854775807:
+            raise ApiError("protocol", "复核记录缺少合法 job_id。")
+        if record.get("decision") not in REVIEW_DECISIONS:
+            raise ApiError("protocol", "复核记录的结论不符合约定。")
+        field_id = record.get("field_id")
+        if field_id is not None and (type(field_id) is not int or field_id <= 0):
+            raise ApiError("protocol", "复核记录的区域编号不符合约定。")
+        if (record.get('target') != ('task' if field_id is None else 'region')
+                or any(not isinstance(record.get(k), str) or not record[k].strip() for k in
+                       ('reviewer', 'note', 'request_id', 'created_at'))
+                or type(record.get('run_seq')) is not int or record['run_seq'] <= 0
+                or any(not re.fullmatch(r'[0-9a-f]{64}', str(record.get(k,'')))
+                       for k in ('input_sha256', 'model_sha256'))):
+            raise ApiError('protocol', '复核记录缺少完整内容或识别来源快照。')
+        return record
 
     # ---- 内部实现 ---------------------------------------------------------
 

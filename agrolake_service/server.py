@@ -10,9 +10,10 @@ import logging
 import sqlite3
 import socket
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 from . import SERVICE_NAME, __version__
+from . import reviews
 from . import validation
 from .jobs import IdempotencyConflict,ArtifactIntegrityError
 from .validation import ValidationError
@@ -86,7 +87,7 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
         except ValueError:
             return False
 
-    def _read_json_body(self):
+    def _read_json_body(self, max_bytes: int | None = None):
         ctype = (self.headers.get("Content-Type", "") or "").split(";")[0].strip().lower()
         if ctype != "application/json":
             raise ValidationError("仅接受 application/json 请求体", status=415)
@@ -103,9 +104,10 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
             raise ValidationError("Content-Length 非法") from None
         if length < 0:
             raise ValidationError("Content-Length 非法")
-        if length > self.config.max_body_bytes:
+        limit = self.config.max_body_bytes if max_bytes is None else max_bytes
+        if length > limit:
             raise ValidationError(
-                f"请求正文 {length} 字节超过上限 {self.config.max_body_bytes} 字节",
+                f"请求正文 {length} 字节超过上限 {limit} 字节",
                 status=413,
             )
         raw = self.rfile.read(length)
@@ -136,6 +138,8 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
                 return self._handle_job_detail(segs[1])
             if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "fields":
                 return self._handle_job_fields(segs[1])
+            if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "reviews":
+                return self._handle_review_list(segs[1])
             if len(segs) == 4 and segs[0] == "jobs" and segs[2] == "artifacts":
                 return self._handle_artifact(segs[1], segs[3])
         except ValidationError as exc:
@@ -152,8 +156,14 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
             return self._send_error_json(403, "拒绝非本机 Host 的请求")
         if not self._origin_ok():
             return self._send_error_json(403, "拒绝非本机或外站浏览器来源（Origin）")
-        if self._segments() != ["jobs"]:
-            return self._send_error_json(404, "未知路径")
+        segs = self._segments()
+        if segs == ["jobs"]:
+            return self._handle_job_submit()
+        if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "reviews":
+            return self._handle_review_submit(segs[1])
+        return self._send_error_json(404, "未知路径")
+
+    def _handle_job_submit(self):
         try:
             payload = self._read_json_body()
             normalized = validation.validate_job_payload(
@@ -230,6 +240,52 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
         if data is None:
             return self._send_error_json(404, '产物不存在或作业尚未成功')
         return self._send_bytes(200, data, cfg.ARTIFACT_CONTENT_TYPES[name], name)
+
+    def _query_params(self) -> dict:
+        if "?" not in self.path:
+            return {}
+        try:
+            pairs = parse_qsl(self.path.split('?', 1)[1], keep_blank_values=True, max_num_fields=10)
+        except ValueError:
+            raise ValidationError('复核分页参数过多') from None
+        if any(k not in {'after_id', 'limit', 'until_id'} for k, _ in pairs):
+            raise ValidationError('未知复核分页参数')
+        if len({k for k, _ in pairs}) != len(pairs):
+            raise ValidationError('复核分页参数不能重复')
+        return dict(pairs)
+
+    def _handle_review_submit(self, raw_id: str):
+        try:
+            job_id = self._parse_job_id(raw_id)
+            payload = self._read_json_body(reviews.MAX_REVIEW_BODY_BYTES)
+            outcome = reviews.submit_review(self.config.db_path, job_id, payload)
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('记录人工复核失败')
+            return self._send_error_json(
+                500, '人工复核未能保存，已保留已有数据，请查看本地服务日志'
+            )
+        body = dict(outcome["record"])
+        body["created"] = outcome["created"]
+        return self._send_json(201 if outcome["created"] else 200, body)
+
+    def _handle_review_list(self, raw_id: str):
+        try:
+            job_id = self._parse_job_id(raw_id)
+            params = self._query_params()
+            result = reviews.list_reviews(
+                self.config.db_path, job_id,
+                after_id=params.get("after_id"), limit=params.get("limit"), until_id=params.get('until_id'),
+            )
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('读取复核记录失败')
+            return self._send_error_json(
+                500, '读取复核记录失败，详情请查看本地服务日志'
+            )
+        return self._send_json(200, result)
 
 
 class RecognitionServer(ThreadingHTTPServer):

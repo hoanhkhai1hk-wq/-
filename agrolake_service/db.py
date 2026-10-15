@@ -119,6 +119,25 @@ CREATE INDEX IF NOT EXISTS idx_rec_jobs_status ON rec_jobs(status);
 CREATE INDEX IF NOT EXISTS idx_rec_runs_job ON rec_runs(job_id);
 CREATE INDEX IF NOT EXISTS idx_rec_regions_job ON rec_regions(job_id);
 CREATE INDEX IF NOT EXISTS idx_rec_counts_job ON rec_class_counts(job_id);
+
+-- 人工复核记录（DEV-20261015-013）。只新增，不改旧表；历史不可覆盖。
+CREATE TABLE IF NOT EXISTS rec_reviews (
+    review_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER NOT NULL,
+    field_id INTEGER,                      -- NULL 表示对任务整体的复核，非 NULL 为某候选区域
+    decision TEXT NOT NULL,                -- accepted | questioned | rejected
+    reviewer TEXT NOT NULL,                -- 本机署名，不是已认证身份
+    note TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    content_fingerprint TEXT NOT NULL,     -- 规范化内容指纹，用于同号幂等
+    input_sha256 TEXT NOT NULL,            -- 服务端从该作业取得的快照
+    model_sha256 TEXT,
+    run_seq INTEGER,
+    created_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_rec_reviews_request ON rec_reviews(request_id);
+CREATE INDEX IF NOT EXISTS idx_rec_reviews_job ON rec_reviews(job_id);
+CREATE INDEX IF NOT EXISTS idx_rec_reviews_job_field ON rec_reviews(job_id, field_id);
 """
 
 # 候选区域类计数含义（与 CLI run.json 一致）。

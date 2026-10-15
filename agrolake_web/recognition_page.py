@@ -22,6 +22,7 @@ import streamlit as st
 from agrolake_service import config as svc
 
 from .client import ApiConfigError, ApiError, RecognitionClient
+from . import review_panel
 
 # 会话状态前缀：避免与 P0 页面（ag_flash 等）冲突。
 _NS = "rec"
@@ -514,5 +515,14 @@ def _render_success(client: RecognitionClient, job: dict) -> None:
                 f"下载 {name}", data, file_name=name, mime=mime.get(name),
                 key=f"{_NS}_dl_{job_id}_{name}",
             )
+
+    # 人工复核面板：只在五项产物校验齐全（未因 409/摘要不符被清空）时出现，
+    # 避免在结果未被验证时给出可复核的“成功”观感。
+    artifacts_ok = len(artifacts) == len(svc.FIXED_ARTIFACTS)
+    if artifacts_ok:
+        regions = (fields or {}).get("regions") or []
+        review_panel.render(client, job, regions)
+    else:
+        st.caption("产物未通过完整校验，暂不提供人工复核记录。")
 
     _render_trace(job)
