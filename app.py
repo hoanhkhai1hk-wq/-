@@ -2,7 +2,7 @@
 
 以“场景预览 + 问题工作台”为中心，紧凑中文布局。
 所有操作实际落库，重启后可读。
-本轮仅实现 P0 治理底座；FTW 真实推理与 DeepSeek 尚未集成。
+治理页面与FTW真实识别服务已连接；DeepSeek尚未接入。
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ import streamlit as st
 
 from agrolake import config, db, disposition, ingest, quality, reporting, scenes, semantics
 from agrolake import storage
+from agrolake_web import recognition_page
 
 st.set_page_config(page_title="AgroLake 治理底座", layout="wide")
 
@@ -148,7 +149,8 @@ def config_rule_version() -> str:
 def page_import(conn):
     st.subheader("资料导入")
     st.caption(
-        "支持 JPG/PNG 影像、CSV 属性、JSON/TXT 记录。TIFF/GeoTIFF 本轮待接入。"
+        "支持 JPG/PNG 影像、CSV 属性、JSON/TXT 记录；本页不支持 TIFF/GeoTIFF，"
+        "请到第 8 页“田块识别”使用专门的 8 波段识别模型。"
         "CSV/JSON/TXT 需为 UTF-8 编码；编码不符会登记问题并阻断，不做替换损坏。"
     )
     up = st.file_uploader("选择文件", type=["jpg", "jpeg", "png", "csv", "json", "txt"])
@@ -478,7 +480,8 @@ def main():
     st.title("AgroLake · 农智数湖治理底座")
     st.caption(
         "面向数字农服的影像交付与资料质检（P0 精简治理原型）。"
-        "真实田块识别模型与 DeepSeek 尚未集成，本页结论不含模型推理或 AI 回答。"
+        "第 8 页“田块识别”已接入本机识别服务运行 FTW v1 8 波段模型；"
+        "DeepSeek 问答尚未集成，前 7 个治理页结论不含模型推理或 AI 回答。"
     )
     consume_flash()
     try:
@@ -488,7 +491,7 @@ def main():
         return
     try:
         tabs = st.tabs(["治理概览", "资料导入", "数据目录", "问题处置",
-                        "场景关联", "类别规范", "报告导出"])
+                        "场景关联", "类别规范", "报告导出", "田块识别"])
         with tabs[0]:
             page_overview(conn)
         with tabs[1]:
@@ -503,6 +506,8 @@ def main():
             page_category(conn)
         with tabs[6]:
             page_reports(conn)
+        with tabs[7]:
+            recognition_page.render()
     finally:
         # 每次脚本运行独立连接，结束即关闭，避免跨线程复用与泄漏。
         try:
