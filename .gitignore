@@ -10,7 +10,7 @@ dist/
 *.egg-info/
 
 # Local data, trained artifacts, logs and private collaboration material
-data/
+/data/
 models/
 samples/
 reports/
