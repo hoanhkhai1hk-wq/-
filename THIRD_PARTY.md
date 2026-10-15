@@ -56,3 +56,18 @@ FTW 的完整运行依赖安装未成功，没有已验收的 `requirements-ftw.
 说明：上述 wheel 哈希取自官方 PyPI 元数据（安装前核对），本轮使用 `--no-cache-dir` 未在本地重算 wheel 哈希；本机实测安装版本与冻结清单见 `requirements-p0.lock.txt`。SQLite、hashlib、csv、json 为标准库，不引入额外第三方依赖。
 
 标准库与平台：Python 3.11.15（`.venv-p0`）。未安装 GDAL、rasterio、MinIO、MySQL 或地图套件。
+
+## 6 直接SMP适配器新装小包（DEV-20261015-006，实际安装并使用）
+
+登记时间：2026-10-15。`.venv-recognition`（Python 3.14.7，`--system-site-packages` 只读继承 base CPU Torch）中以 `pip --no-deps` 实际安装的 6 个包。wheel 哈希为本机对实际下载 wheel 重算的 SHA256，并与官方 PyPI JSON 元数据 digest 逐项比对一致；证据 wheel 保留于 `.venv-recognition/wheel-evidence/`。
+
+| 名称 | 来源 | 版本 | 本地重算 wheel SHA256 | 许可（dist-info 实读） | 用途 |
+|---|---|---|---|---|---|
+| segmentation-models-pytorch | [PyPI 0.5.0](https://pypi.org/project/segmentation-models-pytorch/0.5.0/) | 0.5.0 | `c34e09047771aa4dd8878b4f899e8125700cd1f8f7db16e58c37204154151a05` | 主要为 MIT，部分文件另有许可；保留上游 LICENSES 与文件声明 | 构建与严格加载 Unet/efficientnet-b3 |
+| timm | PyPI | 1.0.15 | `5a3dc460c24e322ecc7fd1f3e3eb112423ddee320cb059cc1956fbc9731748ef` | Apache-2.0 | SMP encoder 依赖 |
+| huggingface-hub | PyPI | 0.27.1 | `1c5155ca7d60b60c2e2fc38cbb3ffb7f7c3adf48f824015b219af9061771daec` | Apache-2.0 | timm/SMP 依赖（未联网下载模型） |
+| safetensors | PyPI | 0.6.2 | `c7b214870df923cbc1593c3faee16bec59ea462758699bd3fee399d00aac072c` | Apache-2.0 | SMP 依赖 |
+| PyYAML | PyPI | 6.0.3 | `4a2e8cebe2ff6ab7d1050ecd59c25d4c8bd7e6f400f5f82b96557ac0abafd0ac` | MIT | SMP 依赖 |
+| tifffile | PyPI | 2025.6.11 | `32effb78b10b3a283eb92d4ebf844ae7e93e151458b0412f38518b4e6d2d7542` | BSD-3-Clause | 替代 rasterio/GDAL 读取 GeoTIFF |
+
+继承只读复用（未重装/未升级）：numpy 2.5.2、Pillow 12.3.0、tqdm、requests、filelock、fsspec、packaging、typing_extensions、torch 2.14.1+cpu、torchvision 0.29.1+cpu。未安装 GDAL、rasterio、torchgeo、Lightning 或其他大包；本轮未重新下载模型权重。FTW v1 CC-BY 检查点与上游署名要求见上文第 2/4 节，继续保持。

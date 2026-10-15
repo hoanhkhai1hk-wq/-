@@ -1,0 +1,10 @@
+# DEV-20261015-006 direct SMP adapter - new small dependencies only.
+# Installed with `pip install --no-deps` into .venv-recognition (Python 3.14).
+# Base CPU Torch (torch 2.14.1+cpu / torchvision 0.29.1+cpu / numpy 2.5.2)
+# is inherited read-only via --system-site-packages and is NOT listed here.
+segmentation-models-pytorch==0.5.0
+timm==1.0.15
+huggingface-hub==0.27.1
+safetensors==0.6.2
+PyYAML==6.0.3
+tifffile==2025.6.11
