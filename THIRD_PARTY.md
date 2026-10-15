@@ -1,6 +1,6 @@
 # AgroLake 第三方来源与使用状态
 
-登记时间：2026-10-14（Asia/Shanghai）。仅登记本轮实际核查/使用的第三方代码、模型与数据。
+登记时间：2026-10-14（Asia/Shanghai），运行状态更新至2026-10-15。仅登记实际核查/使用的第三方代码、模型与数据。
 核验方式：官方来源网页/API 与本机哈希计算；未确认项保持空白，不臆断。
 
 ## 1 代码
@@ -24,7 +24,7 @@ FTW 的完整运行依赖安装未成功，没有已验收的 `requirements-ftw.
 
 | 名称 | 来源 | 大小 | 许可/条款 | 结论 |
 |---|---|---|---|---|
-| `3_Class_CCBY_FTW_Pretrained.ckpt` | [GitHub v1 release](https://github.com/fieldsoftheworld/ftw-baselines/releases/tag/v1) | 204471122 字节，已本地核对 | 上游 README 说明该模型仅用 CC-BY 或同等开放许可资料预训练；仓库代码许可 MIT 与训练数据条款分开记录 | 本地结构验证，尚未完成推理；不在本仓库再分发 |
+| `3_Class_CCBY_FTW_Pretrained.ckpt` | [GitHub v1 release](https://github.com/fieldsoftheworld/ftw-baselines/releases/tag/v1) | 204471122 字节，已本地核对 | 上游 README 说明该模型仅用 CC-BY 或同等开放许可资料预训练；仓库代码许可 MIT 与训练数据条款分开记录 | 已通过直接SMP适配器和本地HTTP服务完成真实CPU推理，634模型张量严格加载；不在本仓库再分发 |
 
 完整权重本地 SHA256：`d04671c498c181a2bca4b9c1a82fb8dcc93384eaf55841cb6672692f6fb21d3c`。这是本机计算值，不是官方公布摘要。
 
@@ -37,6 +37,8 @@ FTW 的完整运行依赖安装未成功，没有已验收的 `requirements-ftw.
 | `inference-img.tif` | 固定树 `45d7df7ea0c357f2c34182e4a7e0c4625dd43533` 的 `tests/data-files/inference-img.tif` | 3507684 字节；git blob SHA1 `0c2e1f4ad977684805be126d4d2fb92400e18ec6`（与本机实算一致）；SHA256 `da482e7987b36898bd9f8381e7c7fe95c05dfc5ccbba19a58eb65e544d1af750` | 随 ftw-baselines 仓库（MIT）分发 | 上游测试输入；仅用于输入适配验证，不代表 1.4.3 训练时相定义 |
 
 未下载完整国家数据；未合成 8 波段；未复制 RGB。
+
+运行身份限制：目前只对上列公开适配样例完成真实模型演示；时相与波段顺序尚未独立核实，没有真值精度评估。服务软件测试另使用明确标注SYNTHETIC的fixture，不能把这些占位二进制或合成规则测试当作真实模型结果。
 
 ## 4 署名与再分发
 
