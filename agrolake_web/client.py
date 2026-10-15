@@ -314,6 +314,155 @@ class RecognitionClient:
             raise ApiError('protocol', '当前意见不属于本任务的复核快照。')
         return result
 
+    # ---- 治理登记与血缘（DEV-20261015-014）--------------------------------
+
+    def register_governance(self, job_id: int, *, request_id: str,
+                            timeout: float | None = None) -> dict:
+        """POST /jobs/<id>/governance：为成功作业登记识别输入资料（固定请求号幂等）。"""
+        job_id = self._job_id(job_id)
+        if not isinstance(request_id, str) or not re.fullmatch(
+            r"[A-Za-z0-9._:-]{1,128}", request_id
+        ):
+            raise ApiError("protocol", "缺少合法请求号，无法保证幂等。")
+        body = json.dumps({"request_id": request_id}, ensure_ascii=False).encode("utf-8")
+        result = self._request_json(
+            "POST", f"/jobs/{job_id}/governance", body=body,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            timeout=timeout if timeout is not None else self.timeout,
+        )
+        record = self._validate_registration(result)
+        if (type(result.get("created")) is not bool or record["job_id"] != job_id
+                or record["request_id"] != request_id):
+            raise ApiError("protocol", "登记回执与本次请求不一致，请使用同一请求号重试确认。")
+        return result
+
+    def get_lineage(self, job_id: int) -> dict:
+        """GET /jobs/<id>/lineage：读取治理登记与识别血缘（未登记也可读）。"""
+        job_id = self._job_id(job_id)
+        result = self._request_json("GET", f"/jobs/{job_id}/lineage")
+        if result.get("job_id") != job_id:
+            raise ApiError("protocol", "识别服务返回了其他任务的血缘记录，已停止展示。")
+        registered = result.get("registered")
+        if type(registered) is not bool:
+            raise ApiError("protocol", "血缘响应缺少登记状态。")
+        reviews = result.get("reviews")
+        artifacts = result.get("artifacts")
+        integrity = result.get("integrity")
+        if not isinstance(reviews, dict) or not isinstance(artifacts, list) \
+                or not isinstance(integrity, dict):
+            raise ApiError("protocol", "血缘响应结构不符合约定。")
+        if any(type(reviews.get(k)) is not int for k in ("total", "returned", "limit")) \
+                or type(reviews.get("truncated")) is not bool:
+            raise ApiError("protocol", "血缘复核分页结构不符合约定。")
+        items = reviews.get("items")
+        if not isinstance(items, list) or reviews["returned"] != len(items) \
+                or reviews["total"] < reviews["returned"] \
+                or reviews["returned"] > reviews["limit"]:
+            raise ApiError("protocol", "血缘复核分页计数不符合约定。")
+        for row in items:
+            self._validate_review(row)
+            if row["job_id"] != job_id:
+                raise ApiError("protocol", "血缘复核记录混入了其他任务。")
+        for art in artifacts:
+            if (not isinstance(art, dict) or not isinstance(art.get("name"), str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", str(art.get("sha256", "")))
+                    or type(art.get("size_bytes")) is not int or art["size_bytes"] < 0):
+                raise ApiError("protocol", "血缘产物摘要结构不符合约定。")
+        if registered:
+            reg = result.get("registration")
+            if not isinstance(reg, dict):
+                raise ApiError("protocol", "血缘登记内容缺失。")
+            self._validate_registration(reg)
+            if (reg.get("job_id") != job_id
+                    or not isinstance(reg.get("quality_at_registration"), dict)
+                    or not isinstance(reg.get("current"), dict)
+                    or not isinstance((reg.get("current") or {}).get("quality"), dict)):
+                raise ApiError("protocol", "血缘登记内容不完整。")
+        elif result.get("registration") is not None:
+            raise ApiError("protocol", "未登记状态却包含登记内容。")
+        self._validate_lineage_facts(result, job_id)
+        return result
+
+    @staticmethod
+    def _validate_lineage_page(page) -> None:
+        if not isinstance(page, dict) or not isinstance(page.get('items'), list):
+            raise ApiError('protocol', '血缘明细结构不完整。')
+        if (any(type(page.get(k)) is not int or page[k] < 0 for k in ('total','returned','limit'))
+                or not 1 <= page['limit'] <= 500
+                or type(page.get('truncated')) is not bool
+                or page['returned'] != len(page['items'])
+                or page['returned'] != min(page['total'],page['limit'])
+                or page['truncated'] != (page['total'] > page['returned'])):
+            raise ApiError('protocol', '血缘明细计数或截断标记不一致。')
+
+    @staticmethod
+    def _validate_lineage_facts(result, job_id) -> None:
+        def require(ok):
+            if not ok:
+                raise ApiError('protocol', '血缘对象、来源快照或关联编号不一致，已停止展示。')
+        sha = lambda x: isinstance(x,str) and re.fullmatch(r'[0-9a-f]{64}',x) is not None
+        positive = lambda x: type(x) is int and 0 < x <= 9223372036854775807
+        job=result.get('job'); run=result.get('run')
+        require(isinstance(job,dict))
+        require(positive(job.get('input_id')) and sha(job.get('input_sha256'))
+                and job.get('status') in ('queued','running','succeeded','failed','interrupted')
+                and type(job.get('region_count')) is int and job['region_count'] >= 0
+                and result.get('area_unit') == 'pixel')
+        require(isinstance(result.get('integrity'),dict)
+                and type(result['integrity'].get('input_object_intact')) is bool)
+        if job['status']=='succeeded':
+            require(isinstance(run,dict) and positive(run.get('run_seq')) and sha(job.get('model_sha256')))
+            require(run.get('status')=='succeeded' and run.get('input_sha256')==job['input_sha256']
+                    and run.get('model_sha256')==job['model_sha256'])
+            names=[a['name'] for a in result['artifacts']]
+            require(len(names)==len(FIXED_ARTIFACTS) and set(names)==set(FIXED_ARTIFACTS))
+        RecognitionClient._validate_lineage_page(result['reviews'])
+        for row in result['reviews']['items']:
+            require(row['input_sha256']==job['input_sha256']
+                    and row['model_sha256']==job['model_sha256'] and isinstance(run,dict)
+                    and row['run_seq']==run['run_seq'])
+        if not result['registered']:
+            return
+        reg=result['registration'];cur=reg['current'];ver=cur.get('version');asset=cur.get('asset')
+        require(reg['input_sha256']==job['input_sha256'] and isinstance(ver,dict) and isinstance(asset,dict))
+        require(ver.get('version_id')==reg['version_id'] and ver.get('asset_id')==reg['asset_id']
+                and asset.get('asset_id')==reg['asset_id'] and ver.get('object_id')==reg['manifest_sha256']
+                and ver.get('content_type')=='text')
+        snap=reg.get('manifest_at_registration')
+        require(isinstance(snap,dict) and snap.get('job_id')==job_id
+                and snap.get('input_sha256')==job['input_sha256']
+                and snap.get('model_sha256')==job['model_sha256'])
+        for key in ('manifest_service_object_intact','manifest_p0_object_intact'):
+            require(type(result['integrity'].get(key)) is bool)
+        quality=cur['quality']
+        require(quality.get('overall') in ('pass','warn','block','na'))
+        for page in (quality.get('checks'),cur.get('dispositions'),cur.get('history')):
+            RecognitionClient._validate_lineage_page(page)
+            for row in page['items']:
+                require(isinstance(row,dict) and row.get('version_id')==reg['version_id'])
+        snap_quality=reg['quality_at_registration']
+        require(isinstance(snap_quality.get('checks'),list))
+        for row in snap_quality['checks']:
+            require(isinstance(row,dict) and isinstance(row.get('rule_id'),str)
+                    and row.get('status') in ('pass','warn','block','na') and isinstance(row.get('reason'),str))
+
+    @staticmethod
+    def _validate_registration(record) -> dict:
+        if not isinstance(record, dict):
+            raise ApiError("protocol", "登记回执不是对象。")
+        if (type(record.get("link_id")) is not int or record["link_id"] <= 0
+                or type(record.get("job_id")) is not int
+                or not 0 < record["job_id"] <= 9223372036854775807
+                or type(record.get("asset_id")) is not int or record["asset_id"] <= 0
+                or type(record.get("version_id")) is not int or record["version_id"] <= 0
+                or any(not re.fullmatch(r"[0-9a-f]{64}", str(record.get(k, "")))
+                       for k in ("manifest_sha256", "input_sha256"))
+                or record.get("manifest_sha256") == record.get("input_sha256")
+                or not isinstance(record.get("request_id"), str) or not record["request_id"]
+                or not isinstance(record.get("created_at"), str) or not record["created_at"]):
+            raise ApiError("protocol", "登记回执缺少完整字段或摘要不合法。")
+        return record
+
     @staticmethod
     def _validate_review(record) -> dict:
         if not isinstance(record, dict):

@@ -22,6 +22,7 @@ import streamlit as st
 from agrolake_service import config as svc
 
 from .client import ApiConfigError, ApiError, RecognitionClient
+from . import governance_panel
 from . import review_panel
 
 # 会话状态前缀：避免与 P0 页面（ag_flash 等）冲突。
@@ -522,7 +523,9 @@ def _render_success(client: RecognitionClient, job: dict) -> None:
     if artifacts_ok:
         regions = (fields or {}).get("regions") or []
         review_panel.render(client, job, regions)
+        # 治理登记与血缘：同样只在成功且产物校验通过后出现；登记不触发推理。
+        governance_panel.render(client, job, regions)
     else:
-        st.caption("产物未通过完整校验，暂不提供人工复核记录。")
+        st.caption("产物未通过完整校验，暂不提供人工复核与治理登记。")
 
     _render_trace(job)

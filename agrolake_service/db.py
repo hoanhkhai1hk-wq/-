@@ -138,6 +138,23 @@ CREATE TABLE IF NOT EXISTS rec_reviews (
 CREATE UNIQUE INDEX IF NOT EXISTS uq_rec_reviews_request ON rec_reviews(request_id);
 CREATE INDEX IF NOT EXISTS idx_rec_reviews_job ON rec_reviews(job_id);
 CREATE INDEX IF NOT EXISTS idx_rec_reviews_job_field ON rec_reviews(job_id, field_id);
+
+-- 识别输入登记单与 P0 资产的治理链接（DEV-20261015-014）。只新增，不改旧表/既有记录。
+-- 每个作业固定一条登记单；job_id 与 request_id 均唯一，用于同号幂等与跨作业冲突。
+CREATE TABLE IF NOT EXISTS rec_governance_links (
+    link_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER NOT NULL UNIQUE,
+    request_id TEXT NOT NULL UNIQUE,
+    asset_id INTEGER NOT NULL,              -- P0 资产编号
+    version_id INTEGER NOT NULL,            -- P0 资产版本编号
+    manifest_sha256 TEXT NOT NULL,          -- 登记单JSON内容摘要（不是原TIFF摘要）
+    input_sha256 TEXT NOT NULL,             -- 原TIFF输入摘要（与登记单摘要分开）
+    manifest_relpath TEXT NOT NULL,         -- 服务存储中登记单对象相对路径
+    snapshot_json TEXT NOT NULL,            -- 登记时的服务端原事实与质量检查快照
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rec_governance_job ON rec_governance_links(job_id);
+CREATE INDEX IF NOT EXISTS idx_rec_governance_version ON rec_governance_links(version_id);
 """
 
 # 候选区域类计数含义（与 CLI run.json 一致）。

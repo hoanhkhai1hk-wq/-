@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, urlsplit
 
 from . import SERVICE_NAME, __version__
+from . import governance
 from . import reviews
 from . import validation
 from .jobs import IdempotencyConflict,ArtifactIntegrityError
@@ -140,6 +141,8 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
                 return self._handle_job_fields(segs[1])
             if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "reviews":
                 return self._handle_review_list(segs[1])
+            if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "lineage":
+                return self._handle_lineage(segs[1])
             if len(segs) == 4 and segs[0] == "jobs" and segs[2] == "artifacts":
                 return self._handle_artifact(segs[1], segs[3])
         except ValidationError as exc:
@@ -161,6 +164,8 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
             return self._handle_job_submit()
         if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "reviews":
             return self._handle_review_submit(segs[1])
+        if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "governance":
+            return self._handle_governance_submit(segs[1])
         return self._send_error_json(404, "未知路径")
 
     def _handle_job_submit(self):
@@ -284,6 +289,35 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
             LOG.exception('读取复核记录失败')
             return self._send_error_json(
                 500, '读取复核记录失败，详情请查看本地服务日志'
+            )
+        return self._send_json(200, result)
+
+    def _handle_governance_submit(self, raw_id: str):
+        try:
+            job_id = self._parse_job_id(raw_id)
+            payload = self._read_json_body(governance.MAX_GOVERNANCE_BODY_BYTES)
+            outcome = governance.register_governance(self.config, job_id, payload)
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('登记治理资料失败')
+            return self._send_error_json(
+                500, '登记未能保存，已保留已有数据，请查看本地服务日志'
+            )
+        body = dict(outcome["registration"])
+        body["created"] = outcome["created"]
+        return self._send_json(201 if outcome["created"] else 200, body)
+
+    def _handle_lineage(self, raw_id: str):
+        try:
+            job_id = self._parse_job_id(raw_id)
+            result = governance.get_lineage(self.config, job_id)
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('读取治理血缘失败')
+            return self._send_error_json(
+                500, '读取治理血缘失败，详情请查看本地服务日志'
             )
         return self._send_json(200, result)
 
