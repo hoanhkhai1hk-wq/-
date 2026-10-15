@@ -22,6 +22,7 @@ import streamlit as st
 from agrolake_service import config as svc
 
 from .client import ApiConfigError, ApiError, RecognitionClient
+from . import corrections_panel
 from . import governance_panel
 from . import review_panel
 
@@ -395,6 +396,7 @@ def render(api_url: str | None = None) -> None:
         st.error(f"任务失败：{job.get('error') or '服务未给出具体原因，请查看服务日志。'}")
         st.caption("失败任务不显示此前任何成功结果，请检查输入或服务后重新提交。")
         _render_trace(job)
+        corrections_panel.render_origin_only(client, job)
         return
 
     if status == "interrupted":
@@ -403,6 +405,7 @@ def render(api_url: str | None = None) -> None:
         )
         st.caption("中断任务不自动重放；如需重新识别请重新提交一个新任务。")
         _render_trace(job)
+        corrections_panel.render_origin_only(client, job)
         return
 
     if status!='succeeded':
@@ -525,6 +528,8 @@ def _render_success(client: RecognitionClient, job: dict) -> None:
         review_panel.render(client, job, regions)
         # 治理登记与血缘：同样只在成功且产物校验通过后出现；登记不触发推理。
         governance_panel.render(client, job, regions)
+        # 整改复跑与前后对照：只有成功且产物校验通过后出现；创建整改不在此自动提交。
+        corrections_panel.render(client, job, regions)
     else:
         st.caption("产物未通过完整校验，暂不提供人工复核与治理登记。")
 

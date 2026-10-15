@@ -155,6 +155,33 @@ CREATE TABLE IF NOT EXISTS rec_governance_links (
 );
 CREATE INDEX IF NOT EXISTS idx_rec_governance_job ON rec_governance_links(job_id);
 CREATE INDEX IF NOT EXISTS idx_rec_governance_version ON rec_governance_links(version_id);
+
+-- 整改修订链（DEV-20261015-015）。只新增，不改旧表/既有记录/旧 schema_version。
+-- 一条记录=一次“人工问题意见→不可覆盖修订版本→显式新作业”。原事实保存于 snapshot_json，
+-- 生命周期仅允许更新 child_job_id/submission_state/error/submitted_at，其余列不可覆盖。
+CREATE TABLE IF NOT EXISTS rec_corrections (
+    correction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    root_job_id INTEGER NOT NULL,              -- 修订链根作业
+    parent_job_id INTEGER NOT NULL,            -- 本条整改改正的父作业
+    review_id INTEGER NOT NULL,                -- 作为整改来源的 questioned/rejected 意见
+    revision_no INTEGER NOT NULL,              -- root 内唯一递增
+    child_job_id INTEGER,                      -- 整改产生的新作业；可空且唯一
+    request_id TEXT NOT NULL UNIQUE,           -- 全局唯一（本条整改的显式请求号）
+    content_fingerprint TEXT NOT NULL,         -- 规范内容指纹，用于同号幂等
+    derived_job_request_id TEXT NOT NULL UNIQUE,  -- 由 request_id 固定 namespace 派生的子作业请求号
+    operator TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,               -- 不可变事实：父作业/父治理登记/问题意见/修订输入快照
+    changes_json TEXT NOT NULL,
+    is_synthetic_case INTEGER NOT NULL DEFAULT 0,  -- 父样本为 synthetic_test 时继承测试背景
+    prepared_at TEXT NOT NULL,
+    submitted_at TEXT,
+    submission_state TEXT NOT NULL,            -- prepared | linked
+    error TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_rec_corrections_root_rev ON rec_corrections(root_job_id, revision_no);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_rec_corrections_child ON rec_corrections(child_job_id);
+CREATE INDEX IF NOT EXISTS idx_rec_corrections_parent ON rec_corrections(parent_job_id);
 """
 
 # 候选区域类计数含义（与 CLI run.json 一致）。

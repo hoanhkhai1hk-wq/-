@@ -53,3 +53,5 @@ Desktop.ini
 
 # Historical FTW experiments: retained locally, excluded from reviewed releases
 scripts/ftw_smoke/
+# 原生浏览器验收证据保留本地，不纳入源码提交。
+output/playwright/

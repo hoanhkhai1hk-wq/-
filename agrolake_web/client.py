@@ -47,6 +47,18 @@ MAX_REVIEWER_LEN = 80
 MAX_NOTE_LEN = 2000
 MAX_REVIEW_PAGE = 200
 
+# 整改复跑（与 agrolake_service.corrections 保持一致）。
+CORRECTION_STATES = ("prepared", "linked")
+_JOB_STATES = ("queued", "running", "succeeded", "failed", "interrupted")
+_CLASS_KEYS = ("0", "1", "2", "255")
+_OPERATOR_MAX_LEN = 80
+_REASON_MAX_LEN = 2000
+_REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+# 整改来源意见只允许问题类结论；变更白名单与后端 corrections._CHANGE_KEYS 一致。
+_PROBLEM_DECISIONS = ("questioned", "rejected")
+_CHANGE_FIELDS = ("source", "scene_id", "source_link", "license_status")
+_SYNTHETIC_KIND = "synthetic_test"
+
 
 class ApiError(Exception):
     """一次识别服务调用失败，带明确类别与中文说明。
@@ -485,6 +497,536 @@ class RecognitionClient:
                        for k in ('input_sha256', 'model_sha256'))):
             raise ApiError('protocol', '复核记录缺少完整内容或识别来源快照。')
         return record
+
+    # ---- 整改复跑与前后对照（DEV-20261015-016）----------------------------
+
+    def submit_correction(self, parent_job_id: int, *, request_id: str, review_id: int,
+                          operator: str, reason: str, changes: dict | None = None,
+                          replacement: dict | None = None,
+                          timeout: float | None = None) -> dict:
+        """POST /jobs/<parent>/corrections：显式创建一条不可覆盖的整改并复跑。
+
+        仅创建回一条整改记录（记录里带子作业编号）；“已提交”不等于“已识别成功”。
+        """
+        parent_job_id = self._job_id(parent_job_id)
+        if not isinstance(request_id, str) or not _REQUEST_ID_RE.fullmatch(request_id):
+            raise ApiError("protocol", "缺少合法请求号，无法保证幂等。")
+        if type(review_id) is not int or not 0 < review_id <= 9223372036854775807:
+            raise ApiError("protocol", "整改来源复核编号非法。")
+        if not isinstance(operator, str) or not operator.strip():
+            raise ApiError("protocol", "操作者署名不能为空。")
+        if len(operator.strip()) > _OPERATOR_MAX_LEN:
+            raise ApiError("protocol", f"操作者署名超过 {_OPERATOR_MAX_LEN} 字符")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ApiError("protocol", "整改原因不能为空。")
+        if len(reason.strip()) > _REASON_MAX_LEN:
+            raise ApiError("protocol", f"整改原因超过 {_REASON_MAX_LEN} 字符")
+
+        payload: dict = {
+            "request_id": request_id, "review_id": review_id,
+            "operator": operator.strip(), "reason": reason.strip(),
+        }
+        sent_changes = self._normalize_correction_changes(changes)
+        if sent_changes:
+            payload["changes"] = sent_changes
+        if replacement is not None:
+            if (not isinstance(replacement, dict)
+                    or set(replacement) != {"filename", "content_base64"}):
+                raise ApiError("protocol", "替换文件必须且只能包含 filename 与 content_base64。")
+            payload["replacement"] = {
+                "filename": replacement["filename"], "content_base64": replacement["content_base64"],
+            }
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        result = self._request_json(
+            "POST", f"/jobs/{parent_job_id}/corrections", body=body,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            timeout=timeout if timeout is not None else self.timeout,
+        )
+        record = self._validate_correction_record(result)
+        if (type(result.get("created")) is not bool
+                or record["parent_job_id"] != parent_job_id
+                or record["review_id"] != review_id
+                or record["request_id"] != request_id
+                or record["operator"] != operator.strip()
+                or record["reason"] != reason.strip()
+                or record["changes"] != sent_changes):
+            raise ApiError("protocol", "整改回执与本次填写不一致，请使用同一请求号重试确认。")
+        self._validate_correction_links(record)
+        return result
+
+    def list_corrections(self, parent_job_id: int) -> dict:
+        """GET /jobs/<id>/corrections：只读列出改正本作业的整改与 origin。"""
+        parent_job_id = self._job_id(parent_job_id)
+        result = self._request_json("GET", f"/jobs/{parent_job_id}/corrections")
+        if result.get("job_id") != parent_job_id:
+            raise ApiError("protocol", "识别服务返回了其他任务的整改列表，已停止展示。")
+        corrections = result.get("corrections")
+        total = result.get("total")
+        limit = result.get("limit")
+        truncated = result.get("truncated")
+        if (not isinstance(corrections, list) or type(total) is not int or total < 0
+                or type(limit) is not int or not 0 < limit <= 500
+                or type(truncated) is not bool
+                or len(corrections) > limit or total < len(corrections)
+                or truncated != (total > len(corrections))):
+            raise ApiError("protocol", "整改列表结构不完整，不能确认已取全。")
+        previous = 0
+        for row in corrections:
+            self._validate_correction_record(row)
+            self._validate_correction_links(row)
+            if row["parent_job_id"] != parent_job_id or row["correction_id"] <= previous:
+                raise ApiError("protocol", "整改列表的任务或记录顺序不符合约定。")
+            previous = row["correction_id"]
+        origin = result.get("origin")
+        if origin is not None:
+            self._validate_correction_record(origin)
+            self._validate_correction_links(origin)
+            if origin["child_job_id"] != parent_job_id:
+                raise ApiError("protocol", "整改来源记录与当前作业不一致。")
+        if result.get("note") is not None and not isinstance(result.get("note"), str):
+            raise ApiError("protocol", "整改列表说明字段不符合约定。")
+        return result
+
+    def get_correction(self, correction_id: int) -> dict:
+        """GET /corrections/<id>：只读返回整改记录、父/子摘要与事实对照。"""
+        correction_id = self._job_id(correction_id)
+        result = self._request_json("GET", f"/corrections/{correction_id}")
+        record = self._validate_correction_record(result.get("correction"))
+        if record["correction_id"] != correction_id:
+            raise ApiError("protocol", "整改详情返回了其他记录，已停止展示。")
+        self._validate_correction_links(record)
+        snapshot = self._validate_snapshot(result.get("snapshot"), record)
+        parent = self._validate_job_summary(result.get("parent"),
+                                            expect_job_id=record["parent_job_id"])
+        child = result.get("child")
+        if record["child_job_id"] is None:
+            if child is not None:
+                raise ApiError("protocol", "整改尚未链接子作业却返回了子摘要。")
+            child = None
+        else:
+            child = self._validate_job_summary(child, expect_job_id=record["child_job_id"])
+        self._validate_snapshot_facts(snapshot, record, parent, child)
+        self._validate_comparison(result.get("comparison"), record, parent, child, snapshot)
+        return result
+
+    def resume_correction(self, correction_id: int, *, request_id: str,
+                          timeout: float | None = None) -> dict:
+        """POST /corrections/<id>/resume：显式确认已保存的同一整改意图（同号）。"""
+        correction_id = self._job_id(correction_id)
+        if not isinstance(request_id, str) or not _REQUEST_ID_RE.fullmatch(request_id):
+            raise ApiError("protocol", "缺少合法请求号，无法确认原提交。")
+        body = json.dumps({"request_id": request_id}, ensure_ascii=False).encode("utf-8")
+        result = self._request_json(
+            "POST", f"/corrections/{correction_id}/resume", body=body,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            timeout=timeout if timeout is not None else self.timeout,
+        )
+        record = self._validate_correction_record(result)
+        if (result.get("created") is not False
+                or record["correction_id"] != correction_id
+                or record["request_id"] != request_id):
+            raise ApiError("protocol", "整改确认回执与本次请求不一致，请保留原请求号重试。")
+        self._validate_correction_links(record)
+        return result
+
+    @staticmethod
+    def _normalize_correction_changes(changes) -> dict:
+        """本地先按后端同一规则规范化 changes：白名单、类型与空白→None。"""
+        if changes is None:
+            return {}
+        if not isinstance(changes, dict):
+            raise ApiError("protocol", "changes 必须是字典。")
+        unknown = sorted(set(changes) - set(_CHANGE_FIELDS))
+        if unknown:
+            raise ApiError("protocol", f"changes 不接受字段 {unknown}。")
+        out: dict = {}
+        for key in _CHANGE_FIELDS:
+            if key not in changes:
+                continue
+            value = changes[key]
+            if value is None:
+                if key in ("source", "scene_id"):
+                    raise ApiError("protocol", f"changes.{key} 不能为空。")
+                out[key] = None
+                continue
+            if not isinstance(value, str):
+                raise ApiError("protocol", f"changes.{key} 必须是字符串或 null。")
+            text = value.strip()
+            if key in ("source", "scene_id") and not text:
+                raise ApiError("protocol", f"changes.{key} 不能为空。")
+            out[key] = text or None
+        return out
+
+    @staticmethod
+    def _validate_correction_record(record) -> dict:
+        if not isinstance(record, dict):
+            raise ApiError("protocol", "整改记录不是对象，已停止展示。")
+
+        def positive(value) -> bool:
+            return type(value) is int and 0 < value <= 9223372036854775807
+
+        if (not positive(record.get("correction_id"))
+                or not positive(record.get("root_job_id"))
+                or not positive(record.get("parent_job_id"))
+                or not positive(record.get("review_id"))
+                or not positive(record.get("revision_no"))
+                or (record.get("child_job_id") is not None and not positive(record.get("child_job_id")))
+                or not isinstance(record.get("request_id"), str) or not record["request_id"]
+                or not isinstance(record.get("derived_job_request_id"), str)
+                or not record["derived_job_request_id"]
+                or not isinstance(record.get("operator"), str) or not record["operator"].strip()
+                or not isinstance(record.get("reason"), str) or not record["reason"].strip()
+                or not isinstance(record.get("changes"), dict)
+                or type(record.get("is_synthetic_case")) is not bool
+                or record.get("submission_state") not in CORRECTION_STATES
+                or not isinstance(record.get("prepared_at"), str) or not record["prepared_at"]
+                or (record.get("submitted_at") is not None
+                    and not isinstance(record["submitted_at"], str))
+                or (record.get("error") is not None and not isinstance(record["error"], str))):
+            raise ApiError("protocol", "整改记录缺少完整字段或类型不符合约定。")
+        return record
+
+    @staticmethod
+    def _validate_correction_links(record) -> None:
+        parent = record["parent_job_id"]
+        root = record["root_job_id"]
+        child = record["child_job_id"]
+        if not 0 < root <= parent:
+            raise ApiError("protocol", "整改的根/父作业关系不符合约定。")
+        if child is not None and child <= parent:
+            raise ApiError("protocol", "整改的子作业编号不符合约定。")
+        if record["submission_state"] == "linked" and child is None:
+            raise ApiError("protocol", "整改为已链接状态却缺少子作业编号。")
+        if record["submission_state"] == "prepared" and child is not None:
+            raise ApiError("protocol", "整改仍为待提交状态却已带子作业编号。")
+
+    @staticmethod
+    def _evidence_complete(summary) -> bool:
+        """按事实重算证据完整性：成功运行 + 四类非负整数正合计 + 固定 5 产物唯一。"""
+        if summary.get("status") != "succeeded":
+            return False
+        if summary.get("run_seq") is None or summary.get("run_status") != "succeeded":
+            return False
+        counts = summary.get("class_counts")
+        if not isinstance(counts, dict) or set(counts) != set(_CLASS_KEYS):
+            return False
+        if any(type(v) is not int or v < 0 for v in counts.values()):
+            return False
+        if sum(counts[k] for k in _CLASS_KEYS) <= 0:
+            return False
+        artifacts = summary.get("artifacts")
+        if not isinstance(artifacts, list) or len(artifacts) != len(FIXED_ARTIFACTS):
+            return False
+        names = [a.get("name") for a in artifacts if isinstance(a, dict)]
+        if len(names) != len(artifacts) or set(names) != set(FIXED_ARTIFACTS):
+            return False
+        return True
+
+    @staticmethod
+    def _compute_nodata(summary) -> dict | None:
+        """NoData 占比：pixels=255 类、denominator=四类和、ratio=round(pixels/denom,6)。"""
+        if not isinstance(summary, dict) or not summary.get("evidence_complete"):
+            return None
+        counts = summary.get("class_counts")
+        if not isinstance(counts, dict) or set(counts) != set(_CLASS_KEYS):
+            return None
+        if any(type(v) is not int or v < 0 for v in counts.values()):
+            return None
+        total = sum(counts[k] for k in _CLASS_KEYS)
+        if total <= 0:
+            return None
+        pixels = counts["255"]
+        return {"pixels": pixels, "denominator": total, "ratio": round(pixels / total, 6)}
+
+    @classmethod
+    def _validate_job_summary(cls, summary, *, expect_job_id: int) -> dict:
+        if not isinstance(summary, dict):
+            raise ApiError("protocol", "整改对照的任务摘要不是对象。")
+        # 已知必需字段必须存在（键缺失属于协议错误，与显式 null 区分）。
+        if any(key not in summary for key in (
+                "job_id", "status", "input_sha256", "model_sha256", "original_filename",
+                "source", "scene_id", "source_link", "license_status", "sample_kind",
+                "attempt_count", "run_seq", "run_status", "class_counts", "evidence_complete",
+                "artifacts", "region_count", "governance", "latest_task_review")):
+            raise ApiError("protocol", "整改对照的任务摘要缺少必需字段。")
+        # SHA 摘要只接受字符串再匹配十六进制，不做 str 强转（避免把整数当摘要）。
+        hex64 = lambda x: isinstance(x, str) and re.fullmatch(r"[0-9a-f]{64}", x) is not None
+        if (type(summary.get("job_id")) is not int or summary["job_id"] != expect_job_id
+                or summary.get("status") not in _JOB_STATES
+                or not hex64(summary.get("input_sha256"))
+                or not (summary.get("model_sha256") is None or hex64(summary.get("model_sha256")))
+                or not isinstance(summary.get("original_filename"), str) or not summary["original_filename"]
+                or not isinstance(summary.get("source"), str)
+                or not isinstance(summary.get("scene_id"), str)
+                or (summary.get("source_link") is not None and not isinstance(summary["source_link"], str))
+                or (summary.get("license_status") is not None and not isinstance(summary["license_status"], str))
+                or not isinstance(summary.get("sample_kind"), str)
+                or type(summary.get("attempt_count")) is not int or summary["attempt_count"] < 0
+                or (summary.get("run_seq") is not None
+                    and (type(summary["run_seq"]) is not int or summary["run_seq"] <= 0))
+                or (summary.get("run_status") is not None and summary["run_status"] not in _JOB_STATES)
+                or type(summary.get("region_count")) is not int or summary["region_count"] < 0
+                or type(summary.get("evidence_complete")) is not bool):
+            raise ApiError("protocol", "整改对照的任务摘要不完整。")
+        counts = summary.get("class_counts")
+        if counts is not None and (not isinstance(counts, dict)
+                                   or any(k not in _CLASS_KEYS for k in counts)
+                                   or any(type(v) is not int or v < 0 for v in counts.values())):
+            raise ApiError("protocol", "任务摘要的类别像素计数不符合约定。")
+        artifacts = summary.get("artifacts")
+        if not isinstance(artifacts, list):
+            raise ApiError("protocol", "任务摘要的产物列表不符合约定。")
+        names = []
+        for art in artifacts:
+            if (not isinstance(art, dict) or not isinstance(art.get("name"), str)
+                    or not hex64(art.get("sha256"))
+                    or type(art.get("size_bytes")) is not int or art["size_bytes"] < 0):
+                raise ApiError("protocol", "任务摘要的产物摘要不符合约定。")
+            names.append(art["name"])
+        if len(set(names)) != len(names):
+            raise ApiError("protocol", "任务摘要的产物名重复。")
+        gov = summary.get("governance")
+        if gov is not None and (not isinstance(gov, dict)
+                                or type(gov.get("asset_id")) is not int or gov["asset_id"] <= 0
+                                or type(gov.get("version_id")) is not int or gov["version_id"] <= 0
+                                or not hex64(gov.get("manifest_sha256"))):
+            raise ApiError("protocol", "任务摘要的治理登记编号不符合约定。")
+        latest = summary.get("latest_task_review")
+        if latest is not None:
+            RecognitionClient._validate_review(latest)
+            if (latest["job_id"] != expect_job_id or latest["field_id"] is not None
+                    or latest["input_sha256"] != summary["input_sha256"]
+                    or latest["model_sha256"] != summary["model_sha256"]
+                    or latest["run_seq"] != summary.get("run_seq")):
+                raise ApiError("protocol", "任务摘要的最新整体意见不属于该作业的运行。")
+        if summary["evidence_complete"] != cls._evidence_complete(summary):
+            raise ApiError("protocol", "任务摘要的证据完整性标记与运行/产物/计数不一致。")
+        return summary
+
+    @staticmethod
+    def _validate_snapshot(snapshot, record) -> dict:
+        if not isinstance(snapshot, dict):
+            raise ApiError("protocol", "整改快照不是对象。")
+        parent_facts = snapshot.get("parent_facts")
+        revised = snapshot.get("revised")
+        problem = snapshot.get("problem_review")
+        registration = snapshot.get("parent_registration")
+        changes = snapshot.get("changes")
+        # SHA 摘要只接受字符串再匹配十六进制，不做 str 强转（避免把整数当摘要）。
+        hex64 = lambda x: isinstance(x, str) and re.fullmatch(r"[0-9a-f]{64}", x) is not None
+        if (not isinstance(parent_facts, dict) or not isinstance(revised, dict)
+                or not isinstance(problem, dict) or not isinstance(changes, dict)):
+            raise ApiError("protocol", "整改快照结构不完整。")
+        # 已知必需字段必须存在（键缺失属于协议错误，与显式 null 区分）。
+        if any(key not in parent_facts for key in (
+                "job_id", "status", "input_sha256", "model_sha256", "original_filename",
+                "source", "scene_id", "source_link", "license_status", "sample_kind")):
+            raise ApiError("protocol", "整改快照的父作业事实缺少必需字段。")
+        if any(key not in revised for key in (
+                "replaced", "input_sha256", "filename", "size_bytes", "source", "scene_id",
+                "source_link", "license_status", "changed_fields", "bytes_changed")):
+            raise ApiError("protocol", "整改快照的修订输入摘要缺少必需字段。")
+        if (type(parent_facts.get("job_id")) is not int
+                or parent_facts["job_id"] != record["parent_job_id"]
+                or parent_facts.get("status") not in _JOB_STATES
+                or not hex64(parent_facts.get("input_sha256"))
+                or not hex64(parent_facts.get("model_sha256"))
+                or not isinstance(parent_facts.get("original_filename"), str)
+                or not parent_facts["original_filename"]
+                or not isinstance(parent_facts.get("source"), str)
+                or not isinstance(parent_facts.get("scene_id"), str)
+                or (parent_facts.get("source_link") is not None
+                    and not isinstance(parent_facts["source_link"], str))
+                or (parent_facts.get("license_status") is not None
+                    and not isinstance(parent_facts["license_status"], str))
+                or not isinstance(parent_facts.get("sample_kind"), str)):
+            raise ApiError("protocol", "整改快照的父作业事实与记录不一致。")
+        if registration is not None and (not isinstance(registration, dict)
+                or type(registration.get("asset_id")) is not int or registration["asset_id"] <= 0
+                or type(registration.get("version_id")) is not int or registration["version_id"] <= 0
+                or not hex64(registration.get("manifest_sha256"))):
+            raise ApiError("protocol", "整改快照的父治理登记不符合约定。")
+        RecognitionClient._validate_review(problem)
+        if (problem["job_id"] != record["parent_job_id"]
+                or problem["review_id"] != record["review_id"]
+                or problem["decision"] not in _PROBLEM_DECISIONS):
+            raise ApiError("protocol", "整改快照的问题意见与记录不一致。")
+        if (not hex64(revised.get("input_sha256")) or not isinstance(revised.get("filename"), str)
+                or not revised["filename"]
+                or type(revised.get("size_bytes")) is not int or revised["size_bytes"] < 0
+                or not isinstance(revised.get("source"), str)
+                or not isinstance(revised.get("scene_id"), str)
+                or (revised.get("source_link") is not None and not isinstance(revised["source_link"], str))
+                or (revised.get("license_status") is not None
+                    and not isinstance(revised["license_status"], str))
+                or type(revised.get("replaced")) is not bool
+                or type(revised.get("bytes_changed")) is not bool
+                or not isinstance(revised.get("changed_fields"), list)
+                or any(not isinstance(f, str) or f not in _CHANGE_FIELDS
+                       for f in revised["changed_fields"])):
+            raise ApiError("protocol", "整改快照的修订输入摘要不完整。")
+        if (any(k not in _CHANGE_FIELDS for k in changes)
+                or any(not (v is None or isinstance(v, str)) for v in changes.values())):
+            raise ApiError("protocol", "整改快照的变更字段不符合约定。")
+        # 快照内部一致性：changes 与整改记录一致；修订元数据=父事实叠加 changes；标记为实际差异。
+        if changes != record["changes"]:
+            raise ApiError("protocol", "整改快照的变更与整改记录不一致。")
+        base = {k: parent_facts.get(k) for k in _CHANGE_FIELDS}
+        expected_meta = dict(base)
+        expected_meta.update(changes)
+        if any(revised.get(k) != expected_meta[k] for k in _CHANGE_FIELDS):
+            raise ApiError("protocol", "整改快照的修订元数据与父事实/变更不一致。")
+        expected_changed = [k for k in _CHANGE_FIELDS if expected_meta[k] != base[k]]
+        if revised["changed_fields"] != expected_changed:
+            raise ApiError("protocol", "整改快照的变更字段与实际差异不一致。")
+        if revised["bytes_changed"] != (revised["input_sha256"] != parent_facts["input_sha256"]):
+            raise ApiError("protocol", "整改快照的字节变更标记与实际摘要不一致。")
+        if not revised["replaced"] and (revised["input_sha256"] != parent_facts["input_sha256"]
+                                        or revised["filename"] != parent_facts["original_filename"]):
+            raise ApiError("protocol", "整改快照未替换字节却改动了输入。")
+        return snapshot
+
+    @classmethod
+    def _validate_snapshot_facts(cls, snapshot, record, parent, child) -> None:
+        """把快照的父/修订事实与父/子摘要逐项对照，不只校验 JSON 类型。"""
+        pf = snapshot["parent_facts"]
+        revised = snapshot["revised"]
+        problem = snapshot["problem_review"]
+        for key in ("job_id", "status", "input_sha256", "model_sha256", "original_filename",
+                    "source", "scene_id", "source_link", "license_status", "sample_kind"):
+            if pf.get(key) != parent.get(key):
+                raise ApiError("protocol", "整改快照的父作业事实与父摘要不一致。")
+        if snapshot.get("parent_registration") != parent.get("governance"):
+            raise ApiError("protocol", "整改快照的父治理登记与父摘要不一致。")
+        if (problem["job_id"] != parent["job_id"]
+                or problem["input_sha256"] != parent["input_sha256"]
+                or problem["model_sha256"] != parent["model_sha256"]
+                or problem["run_seq"] != parent.get("run_seq")):
+            raise ApiError("protocol", "整改快照的问题意见与父作业运行不一致。")
+        if parent.get("sample_kind") == _SYNTHETIC_KIND and not record["is_synthetic_case"]:
+            raise ApiError("protocol", "父作业为合成测试样本，整改记录必须保留人工背景标记。")
+        if child is not None:
+            if (revised["input_sha256"] != child["input_sha256"]
+                    or revised["filename"] != child["original_filename"]
+                    or revised["source"] != child["source"]
+                    or revised["scene_id"] != child["scene_id"]
+                    or revised["source_link"] != child["source_link"]
+                    or revised["license_status"] != child["license_status"]):
+                raise ApiError("protocol", "整改快照的修订事实与子作业摘要不一致。")
+            if child["model_sha256"] != pf["model_sha256"]:
+                raise ApiError("protocol", "整改子作业未使用与父作业相同的模型。")
+
+    @staticmethod
+    def _validate_nodata(block, expected) -> None:
+        if expected is None:
+            if block is not None:
+                raise ApiError("protocol", "整改证据不齐却给出 NoData 占比。")
+            return
+        if not isinstance(block, dict) or set(block) != {"pixels", "denominator", "ratio"}:
+            raise ApiError("protocol", "整改对照的 NoData 结构不符合约定。")
+        if type(block["pixels"]) is not int or type(block["denominator"]) is not int:
+            raise ApiError("protocol", "整改对照的 NoData 计数不是整数。")
+        ratio = block["ratio"]
+        if isinstance(ratio, bool) or not isinstance(ratio, (int, float)) or not math.isfinite(ratio):
+            raise ApiError("protocol", "整改对照的 NoData 占比不是有限数值。")
+        if block != expected:
+            raise ApiError("protocol", "整改对照的 NoData 分母或占比与像素计数不符。")
+
+    @classmethod
+    def _validate_pixel_block(cls, pixel, parent, child) -> None:
+        if (not isinstance(pixel, dict)
+                or type(pixel.get("comparable_pixel_space")) is not bool
+                or type(pixel.get("same_total_pixels")) is not bool):
+            raise ApiError("protocol", "整改对照的像素比较标记不符合约定。")
+        delta = pixel.get("delta")
+        if (not isinstance(delta, dict) or set(delta) != set(_CLASS_KEYS)
+                or any(type(delta.get(k)) is not int for k in _CLASS_KEYS)):
+            raise ApiError("protocol", "整改对照的像素差值不完整。")
+        totals: dict = {}
+        for side, summary in (("parent", parent), ("child", child)):
+            block = pixel.get(side)
+            if (not isinstance(block, dict) or set(block) != set(_CLASS_KEYS) | {"total"}
+                    or any(type(block.get(k)) is not int or block[k] < 0 for k in _CLASS_KEYS)
+                    or type(block.get("total")) is not int):
+                raise ApiError("protocol", "整改对照的像素计数不完整。")
+            counts = summary.get("class_counts")
+            if (not isinstance(counts, dict) or set(counts) != set(_CLASS_KEYS)
+                    or any(block.get(k) != counts.get(k) for k in _CLASS_KEYS)):
+                raise ApiError("protocol", "整改对照的像素计数与任务摘要不一致。")
+            if block["total"] != sum(block[k] for k in _CLASS_KEYS):
+                raise ApiError("protocol", "整改对照的像素合计与分类计数不一致。")
+            totals[side] = block["total"]
+        if (any(delta[k] != pixel["child"][k] - pixel["parent"][k] for k in _CLASS_KEYS)
+                or pixel.get("same_total_pixels") != (totals["parent"] == totals["child"])
+                or pixel.get("comparable_pixel_space")
+                != (parent["input_sha256"] == child["input_sha256"])):
+            raise ApiError("protocol", "整改对照的同总量/可比空间标记与实际不符。")
+
+    @classmethod
+    def _validate_comparison(cls, comparison, record, parent, child, snapshot) -> None:
+        if not isinstance(comparison, dict):
+            raise ApiError("protocol", "整改对照不是对象。")
+        revised = snapshot["revised"]
+        state = comparison.get("child_state")
+        if state not in _JOB_STATES + ("not_submitted",) \
+                or type(comparison.get("child_succeeded")) is not bool:
+            raise ApiError("protocol", "整改对照的子任务状态不符合约定。")
+        if (type(comparison.get("same_input_sha256")) not in (bool, type(None))
+                or type(comparison.get("same_model_sha256")) not in (bool, type(None))):
+            raise ApiError("protocol", "整改对照的一致性标记不符合约定。")
+        # 复制字段必须与快照逐项一致。
+        if (comparison.get("revised_input_sha256") != revised["input_sha256"]
+                or comparison.get("revised_filename") != revised["filename"]
+                or comparison.get("changed_fields") != revised["changed_fields"]
+                or comparison.get("bytes_changed") != revised["bytes_changed"]
+                or comparison.get("parent_problem_review") != snapshot["problem_review"]
+                or comparison.get("parent_registration") != snapshot.get("parent_registration")):
+            raise ApiError("protocol", "整改对照与快照不一致。")
+        problem = comparison.get("parent_problem_review")
+        if (not isinstance(problem, dict) or problem.get("review_id") != record["review_id"]
+                or problem.get("job_id") != record["parent_job_id"]):
+            raise ApiError("protocol", "整改对照的问题意见与记录不一致。")
+        # 输入/模型映射与同异标记按事实计算。
+        expected_input = {"parent": parent["input_sha256"],
+                          "child": None if child is None else child["input_sha256"]}
+        expected_model = {"parent": parent["model_sha256"],
+                          "child": None if child is None else child["model_sha256"]}
+        if comparison.get("input_sha256") != expected_input \
+                or comparison.get("model_sha256") != expected_model:
+            raise ApiError("protocol", "整改对照的输入/模型摘要映射不符合事实。")
+        if child is None:
+            if comparison.get("same_input_sha256") is not None \
+                    or comparison.get("same_model_sha256") is not None:
+                raise ApiError("protocol", "整改对照无子作业却给出同异标记。")
+        elif (comparison.get("same_input_sha256") != (child["input_sha256"] == parent["input_sha256"])
+              or comparison.get("same_model_sha256") != (child["model_sha256"] == parent["model_sha256"])):
+            raise ApiError("protocol", "整改对照的同异标记与事实不一致。")
+        if comparison.get("child_latest_task_review") != (None if child is None else child["latest_task_review"]):
+            raise ApiError("protocol", "整改对照的子最新意见与子作业不一致。")
+        # NoData：pixels=255、denominator=四类和、ratio=round(pixels/denom,6)；缺证据必须为 null。
+        nodata = comparison.get("nodata")
+        if not isinstance(nodata, dict) or "parent" not in nodata or "child" not in nodata:
+            raise ApiError("protocol", "整改对照缺少 NoData 分母说明。")
+        cls._validate_nodata(nodata.get("parent"), cls._compute_nodata(parent))
+        cls._validate_nodata(nodata.get("child"),
+                             None if child is None else cls._compute_nodata(child))
+        # 像素对照：仅两次成功且证据齐全才有值，且与父子摘要逐项一致。
+        pixel = comparison.get("class_pixel_comparison")
+        expected_present = bool(child is not None and child.get("status") == "succeeded"
+                                and parent.get("evidence_complete") and child.get("evidence_complete"))
+        if pixel is None:
+            if expected_present:
+                raise ApiError("protocol", "整改证据齐全却缺少像素对照。")
+        else:
+            if not expected_present:
+                raise ApiError("protocol", "整改证据不齐却给出像素对照。")
+            cls._validate_pixel_block(pixel, parent, child)
+        if child is None:
+            if state != "not_submitted" or comparison["child_succeeded"]:
+                raise ApiError("protocol", "整改缺少子作业摘要却给出已提交对照。")
+        elif state != child["status"] \
+                or comparison["child_succeeded"] != (child["status"] == "succeeded"):
+            raise ApiError("protocol", "对照状态与子作业摘要不一致。")
 
     # ---- 内部实现 ---------------------------------------------------------
 

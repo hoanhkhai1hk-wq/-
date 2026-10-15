@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, urlsplit
 
 from . import SERVICE_NAME, __version__
+from . import corrections
 from . import governance
 from . import reviews
 from . import validation
@@ -143,6 +144,10 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
                 return self._handle_review_list(segs[1])
             if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "lineage":
                 return self._handle_lineage(segs[1])
+            if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "corrections":
+                return self._handle_correction_list(segs[1])
+            if len(segs) == 2 and segs[0] == "corrections":
+                return self._handle_correction_detail(segs[1])
             if len(segs) == 4 and segs[0] == "jobs" and segs[2] == "artifacts":
                 return self._handle_artifact(segs[1], segs[3])
         except ValidationError as exc:
@@ -166,6 +171,10 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
             return self._handle_review_submit(segs[1])
         if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "governance":
             return self._handle_governance_submit(segs[1])
+        if len(segs) == 3 and segs[0] == "jobs" and segs[2] == "corrections":
+            return self._handle_correction_submit(segs[1])
+        if len(segs)==3 and segs[0]=='corrections' and segs[2]=='resume':
+            return self._handle_correction_resume(segs[1])
         return self._send_error_json(404, "未知路径")
 
     def _handle_job_submit(self):
@@ -318,6 +327,61 @@ class RecognitionRequestHandler(BaseHTTPRequestHandler):
             LOG.exception('读取治理血缘失败')
             return self._send_error_json(
                 500, '读取治理血缘失败，详情请查看本地服务日志'
+            )
+        return self._send_json(200, result)
+
+    def _handle_correction_submit(self, raw_id: str):
+        try:
+            job_id = self._parse_job_id(raw_id)
+            payload = self._read_json_body()
+            outcome = corrections.submit_correction(self.manager, job_id, payload)
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except IdempotencyConflict as exc:
+            return self._send_error_json(409, str(exc))
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('创建整改失败')
+            return self._send_error_json(
+                500, '整改未能保存，已保留已有数据，请查看本地服务日志'
+            )
+        body = dict(outcome["record"])
+        body["created"] = outcome["created"]
+        return self._send_json(201 if outcome["created"] else 200, body)
+
+    def _handle_correction_list(self, raw_id: str):
+        try:
+            job_id = self._parse_job_id(raw_id)
+            result = corrections.list_corrections(self.manager, job_id)
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('读取整改列表失败')
+            return self._send_error_json(
+                500, '读取整改列表失败，详情请查看本地服务日志'
+            )
+        return self._send_json(200, result)
+
+    def _handle_correction_resume(self, raw_id: str):
+        try:
+            correction_id=self._parse_job_id(raw_id)
+            outcome=corrections.resume_correction(self.manager,correction_id,self._read_json_body(4096))
+        except ValidationError as exc:
+            return self._send_error_json(exc.status,exc.message)
+        except (OSError,sqlite3.Error,ValueError):
+            LOG.exception('确认整改失败')
+            return self._send_error_json(503,'整改确认未完成，请保留原请求号重试')
+        return self._send_json(200,dict(outcome['record'],created=False))
+
+    def _handle_correction_detail(self, raw_id: str):
+        try:
+            correction_id = self._parse_job_id(raw_id)
+            result = corrections.get_correction(self.manager, correction_id)
+        except ValidationError as exc:
+            return self._send_error_json(exc.status, exc.message)
+        except (OSError, sqlite3.Error, ValueError):
+            LOG.exception('读取整改详情失败')
+            return self._send_error_json(
+                500, '读取整改详情失败，详情请查看本地服务日志'
             )
         return self._send_json(200, result)
 
