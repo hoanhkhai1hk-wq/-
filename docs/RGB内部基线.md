@@ -77,6 +77,8 @@ Adam学习率0.001；使用忽略255的加权交叉熵。类别权重为`sqrt(�
 
 ## 验证与下一步
 
+后续新增[全量漏分诊断与权重对照](RGB漏分诊断.md)：按全部734张训练图统计三类混淆矩阵，不能用总体像素正确率掩盖田埂误差。训练新增显式`--class-weighting`与`--loss-normalization`选项，默认仍为原平方根逆频和每批权重和归一；完整逆频变体实测恶化，未替代原模型。对照结果以新说明和独立复核记录为准。
+
 ```powershell
 & '.\.venv-recognition\Scripts\python.exe' -B -m unittest tests.recognition.test_rgb_fitting -v
 ```

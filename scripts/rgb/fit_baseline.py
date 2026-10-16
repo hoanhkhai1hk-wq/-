@@ -225,18 +225,52 @@ def finite(value, description):
         raise FittingError(f'Non-finite {description}')
 
 
-def train(selection, output, epochs=3, size=128, batch_size=8, seed=20261017, threads=4, root=ROOT):
+def class_weights_from_counts(histogram, strategy='sqrt_inverse'):
+    counts = np.asarray(histogram)
+    if counts.shape != (3,) or not np.issubdtype(counts.dtype, np.integer) or not (counts > 0).all():
+        raise FittingError('Require three positive integer class counts')
+    if strategy not in ('sqrt_inverse', 'inverse_frequency'):
+        raise FittingError('Unknown class weighting strategy')
+    inverse = counts.sum()/(3*counts.astype(np.float64))
+    weights = np.sqrt(inverse) if strategy == 'sqrt_inverse' else inverse
+    return (weights/weights.mean()).astype(np.float32)
+
+
+def weighted_loss_components(logits, target, weights, normalization='batch_weight_sum', expected_weight=None):
+    valid = target != 255
+    if not bool(valid.any()):
+        raise FittingError('No valid pixels for loss')
+    if normalization == 'batch_weight_sum':
+        denominator = weights[target[valid]].double().sum().item()
+    elif normalization == 'global_expected_weight':
+        if not isinstance(expected_weight, (int, float)) or isinstance(expected_weight, bool) or not math.isfinite(expected_weight) or expected_weight <= 0:
+            raise FittingError('Expected global weight must be finite and positive')
+        denominator = int(valid.sum().item()) * expected_weight
+    else:
+        raise FittingError('Unknown loss normalization')
+    if not math.isfinite(denominator) or denominator <= 0:
+        raise FittingError('Invalid loss denominator')
+    loss_sum = F.cross_entropy(logits, target, weight=weights, ignore_index=255, reduction='sum')
+    finite(loss_sum, 'weighted loss sum')
+    return loss_sum, denominator
+
+
+def train(selection, output, epochs=3, size=128, batch_size=8, seed=20261017, threads=4, root=ROOT, class_weighting='sqrt_inverse', loss_normalization='batch_weight_sum'):
     for value, name, lo, hi in ((epochs, 'epochs', 1, 20), (size, 'size', 32, 512), (batch_size, 'batch_size', 1, 32), (seed, 'seed', 0, 2**32-1), (threads, 'threads', 1, 8)):
         bounded_int(value, name, lo, hi)
     if size % 8:
         raise FittingError('size must be divisible by eight')
+    if class_weighting not in ('sqrt_inverse', 'inverse_frequency'):
+        raise FittingError('Unknown class weighting strategy')
+    if loss_normalization not in ('batch_weight_sum', 'global_expected_weight'):
+        raise FittingError('Unknown loss normalization')
     sp = artifact(selection, root)
     out = new_output(output, [sp.parent], root)
     sp, selection_data, ds, cache, histogram, ignore = verify_selection(sp, root, size)
     if inside(out, Path(ds.input_dir)) or inside(Path(ds.input_dir), out):
         raise FittingError('Output overlaps original input')
-    weights = np.sqrt(histogram.sum()/(3*histogram.astype(np.float64)))
-    weights = (weights/weights.mean()).astype(np.float32)
+    weights = class_weights_from_counts(histogram, class_weighting)
+    expected_weight = float(np.dot(histogram.astype(np.float64), weights.astype(np.float64)) / histogram.sum())
     dataset = CachedImages(cache)
     old_threads = torch.get_num_threads()
     try:
@@ -264,9 +298,7 @@ def train(selection, output, epochs=3, size=128, batch_size=8, seed=20261017, th
                 for x, y, sample_ids in loader:
                     optimizer.zero_grad(set_to_none=True)
                     logits = model(x); finite(logits, 'logits')
-                    valid = y != 255
-                    mass = w[y[valid]].double().sum().item()
-                    loss_sum = F.cross_entropy(logits, y, weight=w, ignore_index=255, reduction='sum')
+                    loss_sum, mass = weighted_loss_components(logits, y, w, loss_normalization, expected_weight)
                     loss = loss_sum/mass; finite(loss, 'loss')
                     loss.backward()
                     for p in model.parameters():
@@ -292,6 +324,8 @@ def train(selection, output, epochs=3, size=128, batch_size=8, seed=20261017, th
                 raise FittingError('No parameter update or invalid final loss')
             checkpoint = {'schema':'agrolake_rgb_internal_unet_v1', 'state_dict':model.state_dict(), 'size':size,
                           'selection_sha256':sha(sp),'seed':seed,'class_ids':CLASSES, 'class_weights':weights.tolist(),
+                          'class_weighting':class_weighting,
+                          'loss_normalization':loss_normalization, 'expected_weight_per_valid_pixel':expected_weight,
                           'trained_on_real_data':True,'semantic_reviewed':False,'independent_test_available':False}
             torch.save(checkpoint, out/'checkpoint.pt')
             loaded = torch.load(out/'checkpoint.pt', map_location='cpu', weights_only=True)
@@ -305,8 +339,10 @@ def train(selection, output, epochs=3, size=128, batch_size=8, seed=20261017, th
                        'batch_size':batch_size,'size':size,'seed':seed,'threads':threads,'optimizer':'Adam','learning_rate':0.001,
                        'model':'SmallUNet width8/16/32; random initialization','parameter_count':sum(p.numel() for p in model.parameters()),
                        'training_class_pixels':{str(k):int(v) for k,v in enumerate(histogram)},'training_ignore_pixels':ignore,
-                       'class_weights':weights.tolist(),'weight_formula':'sqrt(total_valid/(3*class_pixels)); normalized to mean 1',
-                       'loss_aggregation':'sum(weighted CE)/sum(target class weights), ignore 255',
+                       'class_weights':weights.tolist(),'class_weighting':class_weighting,
+                       'weight_formula':('sqrt(total_valid/(3*class_pixels))' if class_weighting == 'sqrt_inverse' else 'total_valid/(3*class_pixels)')+'; normalized to mean 1',
+                       'loss_normalization':loss_normalization, 'expected_weight_per_valid_pixel':expected_weight,
+                       'loss_aggregation':('sum(weighted CE)/sum(target class weights), ignore 255' if loss_normalization == 'batch_weight_sum' else 'sum(weighted CE)/(valid pixels * global expected target weight), ignore 255'),
                        'initial_state_sha256':before,'final_state_sha256':after,'checkpoint_roundtrip_equal':equal,
                        'checkpoint_sha256':sha(out/'checkpoint.pt'),'reference_sample_ids':list(refids),
                        'reference_initial_loss':initial,'reference_final_loss':final,'history':history,
@@ -382,6 +418,8 @@ def main(argv=None):
     fit=commands.add_parser('train');fit.add_argument('--selection',required=True);fit.add_argument('--output',required=True)
     for flag,default in (('epochs',3),('size',128),('batch-size',8),('seed',20261017),('threads',4)):
         fit.add_argument('--'+flag,type=int,default=default)
+    fit.add_argument('--class-weighting',choices=['sqrt_inverse','inverse_frequency'],default='sqrt_inverse')
+    fit.add_argument('--loss-normalization',choices=['batch_weight_sum','global_expected_weight'],default='batch_weight_sum')
     pred=commands.add_parser('predict')
     for flag in ('checkpoint','selection','sample-id','output'):pred.add_argument('--'+flag,required=True)
     args=vars(parser.parse_args(argv));command=args.pop('command')

@@ -80,6 +80,46 @@ def fixture(name):
 
 
 class FittingTests(unittest.TestCase):
+    def test_global_normalization_batch_partition_gradient_property(self):
+        logits=torch.tensor([[[[2.,-1.]],[[0.,1.]],[[1.,0.]]],[[[0.,1.]],[[2.,0.]],[[1.,2.]]]],requires_grad=True)
+        targets=torch.tensor([[[0,255]],[[1,2]]]);w=torch.tensor([.1,1.,2.]);expected=.5
+        total,mass=fit.weighted_loss_components(logits,targets,w,'global_expected_weight',expected)
+        whole=total/mass;whole_gradient=torch.autograd.grad(whole,logits,retain_graph=True)[0]
+        pieces=[]
+        for i in range(2):
+            numerator,denominator=fit.weighted_loss_components(logits[i:i+1],targets[i:i+1],w,'global_expected_weight',expected)
+            pieces.append((numerator/denominator)*int((targets[i]!=255).sum())/3)
+        partitioned=sum(pieces);partition_gradient=torch.autograd.grad(partitioned,logits,retain_graph=True)[0]
+        self.assertAlmostEqual(whole.item(),partitioned.item(),places=6)
+        torch.testing.assert_close(whole_gradient,partition_gradient)
+        old,old_mass=fit.weighted_loss_components(logits,targets,w)
+        torch.testing.assert_close(old/old_mass,F.cross_entropy(logits,targets,weight=w,ignore_index=255))
+        self.assertEqual(float(whole_gradient[0,:,0,1].abs().sum()),0.)
+        with self.assertRaises(fit.FittingError):fit.weighted_loss_components(logits,targets,w,'global_expected_weight',0)
+
+    def test_global_normalization_training_metadata(self):
+        _,selection=fixture('global-'+uuid.uuid4().hex[:6]);out=probe.CASE/('global-fit-'+uuid.uuid4().hex[:6])
+        result=fit.train(selection,out,epochs=1,size=32,threads=1,seed=17,class_weighting='inverse_frequency',loss_normalization='global_expected_weight')
+        self.assertEqual(result['loss_normalization'],'global_expected_weight')
+        cp=torch.load(out/'checkpoint.pt',weights_only=True,map_location='cpu')
+        self.assertEqual(cp['loss_normalization'],'global_expected_weight')
+        self.assertGreater(cp['expected_weight_per_valid_pixel'],0)
+    def test_class_weight_strategies_and_legacy_default(self):
+        counts=np.array([80,15,5],dtype=np.int64)
+        old=np.sqrt(counts.sum()/(3*counts.astype(np.float64)));old=(old/old.mean()).astype(np.float32)
+        np.testing.assert_array_equal(fit.class_weights_from_counts(counts),old)
+        w=fit.class_weights_from_counts(counts,'inverse_frequency')
+        np.testing.assert_allclose(w*counts,np.full(3,80*w[0]),rtol=1e-6)
+        for bad in ([80,0,5],[1.,2.,3.],[True,True,True],[1,2]):
+            with self.assertRaises(fit.FittingError):fit.class_weights_from_counts(bad)
+        with self.assertRaises(fit.FittingError):fit.class_weights_from_counts(counts,'bad')
+
+    def test_inverse_weighting_runs_and_is_recorded(self):
+        _,selection=fixture('inverse-'+uuid.uuid4().hex[:6]);out=probe.CASE/('inverse-fit-'+uuid.uuid4().hex[:6])
+        result=fit.train(selection,out,epochs=1,size=32,batch_size=3,threads=1,seed=17,class_weighting='inverse_frequency')
+        self.assertEqual(result['class_weighting'],'inverse_frequency');self.assertEqual(result['optimizer_steps'],2)
+        cp=torch.load(out/'checkpoint.pt',weights_only=True,map_location='cpu')
+        self.assertEqual(cp['class_weighting'],'inverse_frequency');self.assertEqual(cp['class_weights'],result['class_weights'])
     def test_selection_all_dispositions_and_rerun_refusal(self):
         base=probe.fixture('selection-'+uuid.uuid4().hex[:6]);out=probe.CASE/('selection-out-'+uuid.uuid4().hex[:6])
         result=select.select_candidates(str(base),str(out))
@@ -138,7 +178,7 @@ class FittingTests(unittest.TestCase):
 
     def test_invalid_parameters_no_output(self):
         _,selection=fixture('params-'+uuid.uuid4().hex[:6])
-        for kwargs in ({'epochs':True},{'epochs':0},{'size':33},{'batch_size':33},{'threads':0},{'seed':-1},{'seed':2**32}):
+        for kwargs in ({'epochs':True},{'epochs':0},{'size':33},{'batch_size':33},{'threads':0},{'seed':-1},{'seed':2**32},{'class_weighting':'bad'}):
             out=probe.CASE/('invalid-'+uuid.uuid4().hex[:6])
             with self.subTest(kwargs=kwargs),self.assertRaises(fit.FittingError):fit.train(selection,out,**kwargs)
             self.assertFalse(out.exists())
