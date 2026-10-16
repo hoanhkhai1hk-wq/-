@@ -55,3 +55,7 @@ Desktop.ini
 scripts/ftw_smoke/
 # 原生浏览器验收证据保留本地，不纳入源码提交。
 output/playwright/
+
+# 原始人工标注目录：仅本地只读，保护原始 JSON/图像，不纳入源码提交
+/邓/
+/hy0713 (1)/
