@@ -76,10 +76,32 @@ class CohortProbeTests(unittest.TestCase):
 
     def test_invalid_parameters_no_output(self):
         selection,config=prepare('params-cohort-'+uuid.uuid4().hex[:6])
-        for kwargs in ({'steps':True},{'steps':0},{'steps':501},{'size':33},{'seed':-1},{'threads':0}):
+        invalid_lr = [True, 0, -.001, float('nan'), float('inf'), 1e-7, .1, '0.0003', None]
+        for kwargs in [{'steps':True},{'steps':0},{'steps':501},{'size':33},{'seed':-1},{'threads':0},
+                       *[{'learning_rate':value} for value in invalid_lr]]:
             out=probe.CASE/('invalid-cohort-'+uuid.uuid4().hex[:6])
             with self.subTest(kwargs=kwargs),self.assertRaises(mod.ProbeError):mod.run_probe(selection,config,out,**kwargs)
             self.assertFalse(out.exists())
+
+    def test_learning_rate_scales_first_update_and_is_recorded(self):
+        selection,config=prepare('lr-cohort-'+uuid.uuid4().hex[:6]);states=[]
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17);initial=mod.fit.SmallUNet().state_dict()
+        for rate in (.001,.0003):
+            out=probe.CASE/('lr-out-'+uuid.uuid4().hex[:6])
+            kwargs={} if rate==.001 else {'learning_rate':rate}
+            result=mod.run_probe(selection,config,out,steps=1,size=32,seed=17,threads=1,**kwargs)
+            self.assertEqual(result['learning_rate'],rate)
+            summary=mod.fit.read_json(out/'small2/summary.json')
+            cp=torch.load(out/'small2/probe_checkpoint.pt',weights_only=True,map_location='cpu')
+            self.assertEqual(summary['learning_rate'],rate);self.assertEqual(cp['learning_rate'],rate)
+            states.append(cp['state_dict'])
+        movement=0.
+        for name,start in initial.items():
+            old_delta=states[0][name]-start;new_delta=states[1][name]-start
+            self.assertTrue(torch.allclose(new_delta,old_delta*.3,rtol=1e-4,atol=2e-8),name)
+            movement+=float(new_delta.abs().sum())
+        self.assertGreater(movement,0)
 
     def test_input_change_during_run_cannot_publish_success(self):
         selection,config=prepare('changed-cohort-'+uuid.uuid4().hex[:6]);out=probe.CASE/('changed-out-'+uuid.uuid4().hex[:6])

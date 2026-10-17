@@ -40,7 +40,7 @@
 & '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/cohort_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-cohort-20261017-008/cohorts.json' --output 'reports/rgb/manual-cohort-01' --steps 300 --size 128 --seed 20261017 --threads 4
 ```
 
-只使用已有recognition环境，不下载模型。默认300步，允许1—500步；尺寸32—256且为8的倍数；线程1—8。最多8组，每组1—16个不重复ID，组名必须安全且忽略大小写后唯一。所有ID须在选集中标为`experiment_train`；不能通过配置重新纳入排除/暂缓图片。
+只使用已有recognition环境，不下载模型。默认300步，允许1—500步；尺寸32—256且为8的倍数；线程1—8。学习率可用`--learning-rate`显式指定，默认仍0.001；须为有限数值，范围1e-6—1e-2，API拒绝bool/字符串/NaN/Inf等非法值，输出前失败。根/组摘要和专用checkpoint记录实际学习率；原root参数位置兼容。最多8组，每组1—16个不重复ID，组名必须安全且忽略大小写后唯一。所有ID须在选集中标为`experiment_train`；不能通过配置重新纳入排除/暂缓图片。
 
 工具先重新核对全部原图/原JSON、manifest、policy、选集决定与mask摘要，再开始训练。每组独立优化器、相同初始化；检查实际更新次数、曝光次数、loss/梯度/参数有限及参数改变，保存后严格重载核对。选集或配置运行中发生改变时不能发布成功摘要。训练超过300步时也保留300步记录，便于比较固定训练预算；300步默认行为不变。
 
@@ -90,10 +90,43 @@
 & '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/cohort_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-stability-20261017-010/cohorts.json' --output 'reports/rgb/manual-stability-seed17-01' --steps 500 --size 128 --seed 20261017 --threads 4
 ```
 
+## 011：学习率配对检查
+
+事前只指定一个新值0.0003，与010已有0.001结果按seed配对。仍为同8图/顺序、同3seed、各500步和同一初始化，其余条件不变，不重跑旧实验、不追加搜索、不挑最好一次。
+
+|seed|0.001的8图田埂IoU|0.0003的8图田埂IoU|新减旧（百分点）|
+|---|---:|---:|---:|
+|20261017|65.85%|34.00%|-31.86|
+|20261018|60.51%|46.34%|-14.17|
+|20261019|17.32%|74.71%|+57.39|
+
+较小学习率前两次下降、第三次明显提高，没有一致胜出。三次的观察范围从48.53缩到40.71个百分点，但中位数从60.51%降到46.34%；这些都是三次已见图拟合的描述统计，不能仅凭范围缩小称稳定性问题解决，也不是置信区间或农业精度。因此默认保持0.001，旧004和所有旧结果保留，新probe不晋升候选。
+
+同一固定问题图的500步IoU按seed分别从84.96/86.23/26.61%变为67.31/85.97/86.44%，不能用其中一个样本替代8图整体指标。三个初始参数摘要和0步全部记录逐seed与010一致，末态24份预测/面板/CSV/矩阵/loss/来源从原RGB/mask/CP独立重算通过。正常候选预测和诊断入口拒绝专用CP。
+
+结果在`reports/rgb/TRN-20261017-011-seed17/`、同前缀`seed18/`、`seed19/`；配对表和PNG/SVG图在`...-011-lr-summary/`，独立证据在`reports/rgb/Codex-lr-20261017-011/`。复现时换新目录：
+
+```powershell
+& '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/cohort_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-lr-20261017-011/cohorts.json' --output 'reports/rgb/manual-lr-seed17-01' --steps 500 --size 128 --seed 20261017 --threads 4 --learning-rate 0.0003
+```
+
+## 012：标签缩图损失只读检查
+
+另对734张原512×512候选mask，分别NEAREST缩到128/256再最近邻还原512，检查现有标注细节损失，未训练新模型。
+
+|标签往返分辨率|田埂IoU|道路IoU|田埂在缩图后整图消失数|道路整图消失数|
+|---|---:|---:|---:|---:|
+|512→128→512|96.70%|99.17%|0|0|
+|512→256→512|98.37%|99.40%|0|0|
+
+原255不计分母，还原新增255对原已知像素按漏失计入FN，不能借忽略掩盖损失。矩阵真实行0/1/2、还原列0/1/2/255。全部1468次缩图/还原经独立整数索引逐像素核验，并从原mask另用histogram2d重算保存矩阵、指标/CSV/面板。输出`reports/rgb/TRN-20261017-012-mask-resolution/`，证据`reports/rgb/Codex-resolution-20261017-012/`。
+
+128标签往返没有造成类别整图消失，合计标签重合度较高；这不能证明分辨率对RGB识别无影响，未测RGB纹理损失，**也不是模型性能上限或农业精度**。不能把96.70%与模型128训练IoU相减解释为一个已知原因。后续先固定小群组检查模型容量/训练可拟合性，再决定是否扩大734图或提升分辨率；不自动修标签。
+
 ## 软件验证
 
 ```powershell
 & '.\.venv-recognition\Scripts\python.exe' -B -m unittest tests.recognition.test_rgb_fitting tests.recognition.test_rgb_diagnostics tests.recognition.test_rgb_cohort_probe -v
 ```
 
-测试使用合成小图检查曝光/初始化/全池权重、保存加载和拒绝边界；不把软件测试通过当成模型效果通过。原图、原JSON、旧模型、FTW网页和环境保持原样，DeepSeek继续暂缓。
+当前23项测试通过。新增学习率测试用相同初始化的一次Adam更新，核对参数变化按学习率比例缩放及根/组/CP元数据；非法值在输出前失败。其余使用合成小图检查曝光/初始化/全池权重、保存加载和拒绝边界；不把软件测试通过当成模型效果通过。原图、原JSON、旧模型、FTW网页和环境保持原样，DeepSeek继续暂缓。

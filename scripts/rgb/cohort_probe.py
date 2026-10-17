@@ -4,6 +4,7 @@ import csv
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -63,7 +64,10 @@ def evaluate(model, x, y, ids, step, weights):
     return {'step':step, 'weighted_ce':loss, 'per_image':rows, **diag.measures(total)}, guesses
 
 
-def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, threads=4, root=ROOT):
+def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, threads=4, root=ROOT, learning_rate=.001):
+    if isinstance(learning_rate, bool) or not isinstance(learning_rate, (int, float)) or not math.isfinite(learning_rate) or not 1e-6 <= learning_rate <= 1e-2:
+        raise ProbeError('learning_rate must be a finite number in 1e-6..1e-2')
+    learning_rate = float(learning_rate)
     for value, name, lo, hi in ((steps,'steps',1,500),(size,'size',32,256),(seed,'seed',0,2**32-1),(threads,'threads',1,8)):
         fit.bounded_int(value,name,lo,hi)
     if size % 8:
@@ -98,7 +102,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                 y = torch.stack([torch.from_numpy(by_id[sid][1].astype(np.int64)) for sid in ids])
                 torch.manual_seed(seed)
                 model = fit.SmallUNet(); initial_sha = fit.state_digest(model.state_dict())
-                optimizer = torch.optim.Adam(model.parameters(),lr=.001)
+                optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
                 first,_ = evaluate(model,x,y,ids,0,weights)
                 history = [first]; exposures = {sid:0 for sid in ids}; updates = 0
                 folder = out/name; folder.mkdir()
@@ -127,7 +131,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                     raise ProbeError('Cohort config or selection changed during training')
                 payload = {'schema':'agrolake_rgb_cohort_probe_v1','state_dict':model.state_dict(),'cohort_name':name,
                     'sample_ids':ids,'selection_sha256':selection_sha,'cohorts_sha256':config_sha,'size':size,'seed':seed,
-                    'optimizer_steps':updates,'class_ids':fit.CLASSES,'class_weights':weights_np.tolist(),
+                    'optimizer_steps':updates,'class_ids':fit.CLASSES,'class_weights':weights_np.tolist(),'learning_rate':learning_rate,
                     'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False}
                 torch.save(payload,folder/'probe_checkpoint.pt')
                 clone = fit.SmallUNet(); loaded = torch.load(folder/'probe_checkpoint.pt',map_location='cpu',weights_only=True)
@@ -151,7 +155,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                         'prediction_path':path.name,'prediction_sha256':fit.sha(path),'comparison_path':panel_path.name,'comparison_sha256':fit.sha(panel_path)})
                 result = {'kind':'small_cohort_memory_check','cohort_name':name,'sample_count':len(ids),'sample_ids':ids,
                     'reason':group.get('reason',''),'optimizer_steps':updates,'samples_seen':updates*len(ids),'exposures_per_sample':exposures,
-                    'size':size,'seed':seed,'threads':threads,'optimizer':'Adam','learning_rate':.001,
+                    'size':size,'seed':seed,'threads':threads,'optimizer':'Adam','learning_rate':learning_rate,
                     'class_weighting':'sqrt_inverse_from_full_eligible_pool','loss_normalization':'batch_weight_sum',
                     'global_eligible_pool_count':len(cache),'global_class_counts':{str(c):int(histogram[c]) for c in range(3)},
                     'global_ignored_pixels':ignored,'class_weights':weights_np.tolist(),
@@ -161,7 +165,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                     'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False,'source_relationship':'unknown'}
                 fit.write_json(folder/'summary.json',result); completed.append(result)
         overview = {'kind':'cohort_memory_probe_comparison','selection_sha256':selection_sha,'selection_path':fit.relative(sp,root),
-            'cohorts_sha256':config_sha,'steps':steps,'size':size,'seed':seed,'not_candidate_model':True,
+            'cohorts_sha256':config_sha,'steps':steps,'size':size,'seed':seed,'learning_rate':learning_rate,'not_candidate_model':True,
             'semantic_reviewed':False,'independent_test_available':False,'source_relationship':'unknown',
             'cohorts':[{'name':r['cohort_name'],'sample_count':r['sample_count'],'sample_ids':r['sample_ids'],
                 'summary_path':r['cohort_name']+'/summary.json','summary_sha256':fit.sha(out/r['cohort_name']/'summary.json'),
@@ -187,6 +191,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     for flag in ('selection','cohorts','output'):parser.add_argument('--'+flag,required=True)
     for flag,default in (('steps',300),('size',128),('seed',20261017),('threads',4)):parser.add_argument('--'+flag,type=int,default=default)
+    parser.add_argument('--learning-rate',type=float,default=.001)
     try:
         result=run_probe(**vars(parser.parse_args(argv)));print(json.dumps(result,ensure_ascii=False,allow_nan=False));return 0
     except (ProbeError,fit._input.RGBError,OSError,ValueError,RuntimeError,TypeError,KeyError) as exc:
