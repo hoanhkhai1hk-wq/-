@@ -87,7 +87,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
         groups = validate_cohorts(config,selection_sha,set(by_id))
         weights_np = fit.class_weights_from_counts(histogram)
         weights = torch.tensor(weights_np)
-        milestones = sorted({0,steps,*[n for n in (50,100,200) if n < steps]})
+        milestones = sorted({0,steps,*[n for n in (50,100,200,300) if n < steps]})
         out.mkdir(parents=True,exist_ok=False)
         (out/'cohorts.json').write_bytes(config_bytes)
         completed = []
