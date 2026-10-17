@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import math
+from contextlib import nullcontext
 from pathlib import Path
 
 import numpy as np
@@ -82,7 +83,11 @@ def evaluate(model, x, y, ids, step, weights):
     return {'step':step, 'weighted_ce':loss, 'per_image':rows, **diag.measures(total)}, guesses
 
 
-def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, threads=4, root=ROOT, learning_rate=.001, base_width=8):
+def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, threads=4, root=ROOT, learning_rate=.001, base_width=8, max_grad_norm=None):
+    if max_grad_norm is not None:
+        if isinstance(max_grad_norm,bool) or not isinstance(max_grad_norm,(int,float)) or not math.isfinite(max_grad_norm) or not 1e-6 <= max_grad_norm <= 1e6:
+            raise ProbeError('max_grad_norm must be None or a finite number in 1e-6..1e6')
+        max_grad_norm = float(max_grad_norm)
     if type(base_width) is not int or base_width not in (8, 16):
         raise ProbeError('base_width must be 8 or 16')
     if isinstance(learning_rate, bool) or not isinstance(learning_rate, (int, float)) or not math.isfinite(learning_rate) or not 1e-6 <= learning_rate <= 1e-2:
@@ -127,22 +132,58 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                 first,_ = evaluate(model,x,y,ids,0,weights)
                 history = [first]; exposures = {sid:0 for sid in ids}; updates = 0
                 folder = out/name; folder.mkdir()
-                for step in range(1,steps+1):
-                    model.train(); optimizer.zero_grad(set_to_none=True)
-                    logits = model(x); fit.finite(logits,'cohort training logits')
-                    numerator, denominator = fit.weighted_loss_components(logits,y,weights)
-                    loss = numerator/denominator; fit.finite(loss,'cohort training loss'); loss.backward()
-                    for parameter in model.parameters():
-                        if parameter.grad is None:
-                            raise ProbeError('Disconnected cohort parameter')
-                        fit.finite(parameter.grad,'cohort gradient')
-                    optimizer.step()
-                    for parameter in model.parameters(): fit.finite(parameter,'cohort parameter')
-                    updates += 1
-                    for sid in ids: exposures[sid] += 1
-                    if step in milestones:
-                        row, predictions = evaluate(model,x,y,ids,step,weights); history.append(row)
-                        print(json.dumps({'cohort':name,'step':step,'weighted_ce':row['weighted_ce'],'ridge_iou':row['classes']['1']['iou']}),flush=True)
+                clip_meta = {}; clip_rows = []; clip_snapshots = []
+                snapshot_steps = {0,steps,steps-1,*[n for n in (300,400) if n < steps]}
+
+                def save_clip_snapshot(step):
+                    if max_grad_norm is None or step not in snapshot_steps: return
+                    path = folder/f'clip-step-{step:04d}.pt'
+                    torch.save({'schema':'agrolake_rgb_clipped_trace_v1','state_dict':model.state_dict(),
+                        'optimizer_state_dict':optimizer.state_dict(),'optimizer_steps':step,'sample_ids':ids,
+                        'size':size,'seed':seed,'threads':threads,'base_width':base_width,'learning_rate':learning_rate,
+                        'max_grad_norm':max_grad_norm,'class_weights':weights_np.tolist(),
+                        'selection_sha256':selection_sha,'cohorts_sha256':config_sha,
+                        'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False},path)
+                    clip_snapshots.append({'step':step,'path':path.name,'sha256':fit.sha(path),
+                        'parameter_sha256':fit.state_digest(model.state_dict())})
+
+                save_clip_snapshot(0)
+                trace_context = (folder/'gradient_trace.jsonl').open('w',encoding='utf-8',newline='\n') if max_grad_norm is not None else nullcontext(None)
+                with trace_context as trace:
+                    for step in range(1,steps+1):
+                        model.train(); optimizer.zero_grad(set_to_none=True)
+                        logits = model(x); fit.finite(logits,'cohort training logits')
+                        numerator, denominator = fit.weighted_loss_components(logits,y,weights)
+                        loss = numerator/denominator; fit.finite(loss,'cohort training loss'); loss.backward()
+                        for parameter in model.parameters():
+                            if parameter.grad is None:
+                                raise ProbeError('Disconnected cohort parameter')
+                            fit.finite(parameter.grad,'cohort gradient')
+                        if max_grad_norm is not None:
+                            norm = torch.nn.utils.clip_grad_norm_(model.parameters(),max_grad_norm,error_if_nonfinite=True,foreach=False)
+                            after = torch.linalg.vector_norm(torch.stack([torch.linalg.vector_norm(p.grad) for p in model.parameters()]))
+                            fit.finite(norm,'pre-clip norm');fit.finite(after,'post-clip norm')
+                            if after.item() > max_grad_norm*(1+1e-5):raise ProbeError('Gradient clipping bound violated')
+                            coefficient = torch.clamp(max_grad_norm/(norm+1e-6),max=1.0).item()
+                            entry = {'step':step,'loss_before_update':loss.item(),'gradient_l2_before':norm.item(),
+                                'gradient_l2_after':after.item(),'scale':coefficient,'clipped':coefficient < 1.0}
+                            trace.write(json.dumps(entry,allow_nan=False)+'\n');trace.flush();clip_rows.append(entry)
+                        optimizer.step()
+                        for parameter in model.parameters(): fit.finite(parameter,'cohort parameter')
+                        updates += 1
+                        for sid in ids: exposures[sid] += 1
+                        save_clip_snapshot(step)
+                        if step in milestones:
+                            row, predictions = evaluate(model,x,y,ids,step,weights); history.append(row)
+                            print(json.dumps({'cohort':name,'step':step,'weighted_ce':row['weighted_ce'],'ridge_iou':row['classes']['1']['iou']}),flush=True)
+                if max_grad_norm is not None:
+                    clip_meta = {'max_grad_norm':max_grad_norm,'gradient_clipping':{
+                        'mode':'global_l2_before_adam','foreach':False,'epsilon':1e-6,
+                        'clipped_updates':sum(r['clipped'] for r in clip_rows),
+                        'maximum_pre_clip_norm':max(r['gradient_l2_before'] for r in clip_rows),
+                        'maximum_post_clip_norm':max(r['gradient_l2_after'] for r in clip_rows),
+                        'trace_path':'gradient_trace.jsonl','trace_sha256':fit.sha(folder/'gradient_trace.jsonl'),
+                        'snapshots':clip_snapshots}}
                 if updates != steps or any(n != steps for n in exposures.values()):
                     raise ProbeError('Cohort exposure count mismatch')
                 final_sha = fit.state_digest(model.state_dict())
@@ -154,7 +195,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                     'sample_ids':ids,'selection_sha256':selection_sha,'cohorts_sha256':config_sha,'size':size,'seed':seed,
                     'optimizer_steps':updates,'class_ids':fit.CLASSES,'class_weights':weights_np.tolist(),'learning_rate':learning_rate,
                     'base_width':base_width,'channel_widths':[base_width,base_width*2,base_width*4],'parameter_count':parameter_count,
-                    'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False}
+                    'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False,**clip_meta}
                 torch.save(payload,folder/'probe_checkpoint.pt')
                 clone = build_model(base_width); loaded = torch.load(folder/'probe_checkpoint.pt',map_location='cpu',weights_only=True)
                 clone.load_state_dict(loaded['state_dict'],strict=True); clone.eval(); model.eval()
@@ -185,7 +226,7 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
                     'selection_sha256':selection_sha,'cohorts_sha256':config_sha,'input_dir':fit.relative(ds.input_dir,root),
                     'initial_parameter_sha256':initial_sha,'final_parameter_sha256':final_sha,'checkpoint_sha256':fit.sha(folder/'probe_checkpoint.pt'),
                     'checkpoint_roundtrip_equal':roundtrip,'history':history,'artifacts':artifacts,
-                    'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False,'source_relationship':'unknown'}
+                    'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False,'source_relationship':'unknown',**clip_meta}
                 fit.write_json(folder/'summary.json',result); completed.append(result)
         overview = {'kind':'cohort_memory_probe_comparison','selection_sha256':selection_sha,'selection_path':fit.relative(sp,root),
             'cohorts_sha256':config_sha,'steps':steps,'size':size,'seed':seed,'learning_rate':learning_rate,'not_candidate_model':True,
@@ -194,7 +235,8 @@ def run_probe(selection, cohorts, output, steps=300, size=128, seed=20261017, th
             'cohorts':[{'name':r['cohort_name'],'sample_count':r['sample_count'],'sample_ids':r['sample_ids'],
                 'summary_path':r['cohort_name']+'/summary.json','summary_sha256':fit.sha(out/r['cohort_name']/'summary.json'),
                 'final_ridge_metrics':r['history'][-1]['classes']['1']} for r in completed],
-            'note':'Targeted fitting memory probes only. Different cohort composition, not independent model ranking or verified label semantics.'}
+            'note':'Targeted fitting memory probes only. Different cohort composition, not independent model ranking or verified label semantics.',
+            **({'max_grad_norm':max_grad_norm} if max_grad_norm is not None else {})}
         fit.write_json(out/'summary.json',overview)
         with (out/'final_per_image.csv').open('w',encoding='utf-8-sig',newline='') as stream:
             fields=['cohort','sample_id','ridge_true_pixels','ridge_precision','ridge_recall','ridge_iou']
@@ -217,6 +259,7 @@ def main(argv=None):
     for flag,default in (('steps',300),('size',128),('seed',20261017),('threads',4)):parser.add_argument('--'+flag,type=int,default=default)
     parser.add_argument('--learning-rate',type=float,default=.001)
     parser.add_argument('--base-width',type=int,default=8)
+    parser.add_argument('--max-grad-norm',type=float,default=None)
     try:
         result=run_probe(**vars(parser.parse_args(argv)));print(json.dumps(result,ensure_ascii=False,allow_nan=False));return 0
     except (ProbeError,fit._input.RGBError,OSError,ValueError,RuntimeError,TypeError,KeyError) as exc:

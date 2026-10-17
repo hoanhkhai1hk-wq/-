@@ -180,10 +180,38 @@
 & '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/trace_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-width-20261017-013/cohorts.json' --reference 'reports/rgb/TRN-20261017-013-seed18/mixed8/summary.json' --output 'reports/rgb/manual-trace-seed18-01'
 ```
 
+## 016：单一全局梯度裁剪条件
+
+事前固定全局L2上限5.0，每次`backward`后、Adam更新前执行，`foreach=False`、非有限总范数报错；从第1步起执行，不按393步择时启用，也不搜索其他阈值。仍为同mixed8、seed20261017/18/19、128、宽16、4线程、Adam0.001、全734平方根逆频及500步。配对013既有不裁剪结果，不重跑对照。5.0仅是一个诊断条件，参考015第394步之前25步（369—393，包含突变片段）的范数中位数3.61，不是独立验证的最优阈值。
+
+`cohort_probe.py`增加可选`max_grad_norm`，默认`None`完全跳过裁剪和新增记录，不修改原fit/diagnose/trace或正常候选策略。只有启用时写500行`gradient_trace.jsonl`：第n行损失为更新前、即完成n−1步后的模型；记录float32全局范数、实际float32缩放系数和裁剪后范数。它限制梯度，不直接限制Adam参数移动。容差内最大裁剪后范数允许略大于5.0。
+
+启用时额外固定保存0/300/400/499/500模型及Adam状态，均为诊断CP；组/根/末态CP记录上限，组/末态CP记录裁剪计数、范数极值、日志和快照SHA。里程碑仍为0/50/100/200/300/500，未冒称每步都评估IoU。正常候选入口拒绝这些诊断产物。
+
+三次实际各500更新/每图500曝光，配对初始参数及0步全部指标精确一致。固定500步结果：
+
+|seed|不裁剪田埂IoU|裁剪5.0田埂IoU|配对变化（百分点）|实际裁剪更新数|
+|---|---:|---:|---:|---:|
+|20261017|71.89%|83.90%|+12.01|260/500|
+|20261018|0.00%|91.91%|+91.91|146/500|
+|20261019|81.11%|89.68%|+8.57|119/500|
+
+全部为同8张已见图合计。三组末态均提高且均有田埂预测，中位数71.89%→89.68%。第二组300步以后最大CE从原351.7392降至0.0910，末态CE0.019265；本轮没有延续原来直到500步的田埂预测消失。第一组300步后仍有CE约1.61的波动，不能称全程平滑或普遍稳定修复。固定问题图IoU另为90.74%/93.39%/92.81%，不混作8图合计。
+
+全部1500行裁剪记录通过有限值、缩放关系、计数及上限检查，最大裁剪后float32范数5.00000143在1e-5相对容差内。独立定义完整网络，从原RGB/mask核15个固定快照/120逐图结果、24末态PNG/面板/CSV，以及手工全局裁剪（不调用clip_grad_norm_）和111次Adam更新，含第二组300→400完整重放、三组499→500参数及Adam全部状态精确匹配；其中9次复核更新实际触发裁剪。里程碑无CP的50/100/200只核矩阵算术和逐步CE衔接，不声称这些中间预测已重推。
+
+结果`reports/rgb/TRN-20261017-016-seed17/18/19`（同前缀），汇总`...-016-clip-summary/`六文件含三组曲线及固定图面板，证据`reports/rgb/Codex-clip-20261017-016/`。本轮支持把这一固定配置用于734图的有限实验训练，检查放大样本后是否仍改善；这一步尚未启动。旧004/默认不裁剪和014页面保留，所有probe仍非候选，未声称独立农业精度或标签已复核。
+
+需要重复时用新目录，以下只运行一个seed：
+
+```powershell
+& '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/cohort_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-clip-20261017-016/cohorts.json' --output 'reports/rgb/manual-clip-seed18-01' --steps 500 --size 128 --seed 20261018 --threads 4 --learning-rate 0.001 --base-width 16 --max-grad-norm 5
+```
+
 ## 软件验证
 
 ```powershell
 & '.\.venv-recognition\Scripts\python.exe' -B -m unittest tests.recognition.test_rgb_fitting tests.recognition.test_rgb_diagnostics tests.recognition.test_rgb_cohort_probe tests.recognition.test_rgb_gallery tests.recognition.test_rgb_trace_probe -v
 ```
 
-当前31项测试通过。追踪检查覆盖原轨迹精确一致、独立首步梯度/移动范数、快照Adam计数/候选拒绝，以及错误参数/范围/参考漂移不发布成功结果。宽度检查覆盖默认初始化/前向与旧版逐位一致、宽网络有限更新/严格重载/错误结构拒绝，以及非法宽度输出前失败。页面检查覆盖禁止forward、源/像素/矩阵绑定、脚本转义、篡改/越界路径/暂缓样本拒绝和已有输出拒绝。学习率测试核首次Adam参数变化按比例缩放及元数据。其余使用合成小图检查曝光/初始化/全池权重、保存加载和拒绝边界；软件测试通过不等于模型效果通过。原图、原JSON、旧模型、FTW网页和环境保持，DeepSeek继续暂缓。
+当前34项测试通过。裁剪检查核梯度方向/全局上限/非有限总范数拒绝、状态和计数，默认及显式None不调用裁剪且轨迹一致，非法参数输出前失败。追踪检查覆盖原轨迹精确一致、独立首步梯度/移动范数、快照Adam计数/候选拒绝，以及错误参数/范围/参考漂移不发布成功结果。宽度检查覆盖默认初始化/前向与旧版逐位一致、宽网络有限更新/严格重载/错误结构拒绝，以及非法宽度输出前失败。页面检查覆盖禁止forward、源/像素/矩阵绑定、脚本转义、篡改/越界路径/暂缓样本拒绝和已有输出拒绝。学习率测试核首次Adam参数变化按比例缩放及元数据。其余使用合成小图检查曝光/初始化/全池权重、保存加载和拒绝边界；软件测试通过不等于模型效果通过。原图、原JSON、旧模型、FTW网页和环境保持，DeepSeek继续暂缓。

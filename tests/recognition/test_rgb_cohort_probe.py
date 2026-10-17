@@ -79,6 +79,7 @@ class CohortProbeTests(unittest.TestCase):
         invalid_lr = [True, 0, -.001, float('nan'), float('inf'), 1e-7, .1, '0.0003', None]
         for kwargs in [{'steps':True},{'steps':0},{'steps':501},{'size':33},{'seed':-1},{'threads':0},
                        *[{'learning_rate':value} for value in invalid_lr],
+                       *[{'max_grad_norm':value} for value in (True,0,-1,float('nan'),float('inf'),1e-7,1e7,'5')],
                        *[{'base_width':value} for value in (True,0,9,32,8.0,'16',None)]]:
             out=probe.CASE/('invalid-cohort-'+uuid.uuid4().hex[:6])
             with self.subTest(kwargs=kwargs),self.assertRaises(mod.ProbeError):mod.run_probe(selection,config,out,**kwargs)
@@ -141,6 +142,60 @@ class CohortProbeTests(unittest.TestCase):
             result=original_step(optimizer,*args,**kwargs);config.write_text('{}',encoding='utf-8');return result
         with mock.patch.object(torch.optim.Adam,'step',new=changed),self.assertRaises(mod.ProbeError):
             mod.run_probe(selection,config,out,steps=1,size=32,threads=1)
+        self.assertFalse((out/'summary.json').exists());self.assertFalse((out/'small2/summary.json').exists())
+
+    def test_clipping_preserves_direction_enforces_bound_and_records_adam(self):
+        selection,config=prepare('clip-'+uuid.uuid4().hex[:6]);out=probe.CASE/('clip-out-'+uuid.uuid4().hex[:6])
+        original=torch.nn.utils.clip_grad_norm_;observed=[]
+        def inspect(parameters,max_norm,**kwargs):
+            parameters=list(parameters);before=[p.grad.detach().clone() for p in parameters]
+            norm=original(parameters,max_norm,**kwargs)
+            coefficient=torch.clamp(max_norm/(norm+1e-6),max=1.0)
+            self.assertTrue(kwargs['error_if_nonfinite']);self.assertFalse(kwargs['foreach'])
+            for start,p in zip(before,parameters):self.assertTrue(torch.equal(p.grad,start*coefficient))
+            actual=sum(float(p.grad.double().square().sum()) for p in parameters)**.5
+            self.assertLessEqual(actual,max_norm*(1+1e-5));observed.append(norm.item())
+            return norm
+        with mock.patch.object(torch.nn.utils,'clip_grad_norm_',new=inspect):
+            result=mod.run_probe(selection,config,out,steps=2,size=32,threads=1,base_width=16,max_grad_norm=.01)
+        self.assertEqual(len(observed),4);self.assertEqual(result['max_grad_norm'],.01)
+        for group in result['cohorts']:
+            folder=out/group['name'];summary=mod.fit.read_json(folder/'summary.json');meta=summary['gradient_clipping']
+            rows=[probe.json.loads(line) for line in (folder/meta['trace_path']).read_text().splitlines()]
+            self.assertEqual([r['step'] for r in rows],[1,2]);self.assertTrue(all(r['clipped'] for r in rows))
+            self.assertEqual(meta['clipped_updates'],2);self.assertEqual(meta['trace_sha256'],mod.fit.sha(folder/meta['trace_path']))
+            self.assertEqual([a['step'] for a in meta['snapshots']],[0,1,2])
+            for a in meta['snapshots']:
+                cp=torch.load(folder/a['path'],weights_only=True,map_location='cpu')
+                self.assertEqual(cp['max_grad_norm'],.01);self.assertTrue(cp['not_candidate_model'])
+                self.assertEqual(mod.fit.state_digest(cp['state_dict']),a['parameter_sha256'])
+                self.assertTrue(all(s['step'].item()==a['step'] for s in cp['optimizer_state_dict']['state'].values()))
+            final=torch.load(folder/'probe_checkpoint.pt',weights_only=True,map_location='cpu')
+            self.assertEqual(final['gradient_clipping'],meta)
+
+    def test_default_and_explicit_none_skip_clipping_and_keep_identical_trajectory(self):
+        selection,config=prepare('noclip-'+uuid.uuid4().hex[:6]);states=[]
+        for kwargs in ({},{'max_grad_norm':None}):
+            out=probe.CASE/('noclip-out-'+uuid.uuid4().hex[:6])
+            with mock.patch.object(torch.nn.utils,'clip_grad_norm_',side_effect=AssertionError('Default must not clip')):
+                mod.run_probe(selection,config,out,steps=2,size=32,threads=1,**kwargs)
+            summary=mod.fit.read_json(out/'small2/summary.json');states.append(summary)
+            self.assertNotIn('max_grad_norm',summary);self.assertFalse((out/'small2/gradient_trace.jsonl').exists())
+            self.assertEqual(list((out/'small2').glob('clip-step-*.pt')),[])
+        self.assertEqual(states[0]['history'],states[1]['history'])
+        self.assertEqual(states[0]['initial_parameter_sha256'],states[1]['initial_parameter_sha256'])
+        self.assertEqual(states[0]['final_parameter_sha256'],states[1]['final_parameter_sha256'])
+
+    def test_nonfinite_global_norm_cannot_step_or_publish_success(self):
+        selection,config=prepare('norm-overflow-'+uuid.uuid4().hex[:6]);out=probe.CASE/('norm-overflow-out-'+uuid.uuid4().hex[:6])
+        original=torch.nn.utils.clip_grad_norm_
+        def overflow(parameters,*args,**kwargs):
+            parameters=list(parameters)
+            for p in parameters:p.grad.fill_(1e30)
+            return original(parameters,*args,**kwargs)
+        with mock.patch.object(torch.nn.utils,'clip_grad_norm_',new=overflow),mock.patch.object(torch.optim.Adam,'step') as step:
+            with self.assertRaises(RuntimeError):mod.run_probe(selection,config,out,steps=1,size=32,threads=1,max_grad_norm=5)
+            step.assert_not_called()
         self.assertFalse((out/'summary.json').exists());self.assertFalse((out/'small2/summary.json').exists())
 
 
