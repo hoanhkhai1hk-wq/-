@@ -40,7 +40,7 @@
 & '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/cohort_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-cohort-20261017-008/cohorts.json' --output 'reports/rgb/manual-cohort-01' --steps 300 --size 128 --seed 20261017 --threads 4
 ```
 
-只使用已有recognition环境，不下载模型。默认300步，允许1—500步；尺寸32—256且为8的倍数；线程1—8。学习率可用`--learning-rate`显式指定，默认仍0.001；须为有限数值，范围1e-6—1e-2，API拒绝bool/字符串/NaN/Inf等非法值，输出前失败。根/组摘要和专用checkpoint记录实际学习率；原root参数位置兼容。最多8组，每组1—16个不重复ID，组名必须安全且忽略大小写后唯一。所有ID须在选集中标为`experiment_train`；不能通过配置重新纳入排除/暂缓图片。
+只使用已有recognition环境，不下载模型。默认300步，允许1—500步；尺寸32—256且为8的倍数；线程1—8。学习率可用`--learning-rate`显式指定，默认仍0.001；须为有限数值，范围1e-6—1e-2，API拒绝bool/字符串/NaN/Inf等非法值，输出前失败。`--base-width`仅接受整数8或16，默认8直接使用原SmallUNet；16仅在probe中把通道改为16/32/64，继承相同forward。根/组摘要和专用checkpoint记录实际学习率、宽度、通道和参数量，原root/learning_rate参数位置兼容。最多8组，每组1—16个不重复ID，组名必须安全且忽略大小写后唯一。所有ID须在选集中标为`experiment_train`；不能通过配置重新纳入排除/暂缓图片。
 
 工具先重新核对全部原图/原JSON、manifest、policy、选集决定与mask摘要，再开始训练。每组独立优化器、相同初始化；检查实际更新次数、曝光次数、loss/梯度/参数有限及参数改变，保存后严格重载核对。选集或配置运行中发生改变时不能发布成功摘要。训练超过300步时也保留300步记录，便于比较固定训练预算；300步默认行为不变。
 
@@ -123,10 +123,38 @@
 
 128标签往返没有造成类别整图消失，合计标签重合度较高；这不能证明分辨率对RGB识别无影响，未测RGB纹理损失，**也不是模型性能上限或农业精度**。不能把96.70%与模型128训练IoU相减解释为一个已知原因。后续先固定小群组检查模型容量/训练可拟合性，再决定是否扩大734图或提升分辨率；不自动修标签。
 
+## 013：网络宽度对照
+
+固定同8图/顺序、seed20261017/18/19、128输入、500更新、每图500曝光、4线程、Adam0.001及全734平方根逆频，只把通道8/16/32加宽到16/32/64。参数量29,779→118,307。比较相同更新预算，计算量未匹配；相同seed编号也不代表相同初始权重，不能单独证明容量是根因。
+
+|seed|原网络500步田埂IoU|宽网络300步|宽网络固定500步|
+|---|---:|---:|---:|
+|20261017|65.85%|0.22%|71.89%|
+|20261018|60.51%|82.46%|0.00%|
+|20261019|17.32%|77.49%|81.11%|
+
+全部为8图合计指标。宽网络两次末态提高，但第二组从300步82.46%退到固定500步0%，没有稳定解决漏分。三次500步中位数71.89%高于旧60.51%，观察范围却从48.53扩大到81.11个百分点，不能只挑较好两次或把300步冒称末态。保留旧004和默认策略，不晋升probe。
+
+宽网络参数/梯度/loss全部有限、实际更新/曝光和保存重载通过，不能因有限数值就认定训练稳定。独立构造宽网络（不调用训练模型工厂）核初始化、0步预测及所有24末态预测/指标/CE/CSV/面板/来源，全部相符；中间记录只核算术，没有中间CP，不声称已重推300步模型。
+
+结果`reports/rgb/TRN-20261017-013-seed17/18/19`（同前缀）、`...-013-width-summary/`，独立证据`reports/rgb/Codex-width-20261017-013/`。复现时换新目录：
+
+```powershell
+& '.\.venv-recognition\Scripts\python.exe' -B 'scripts/rgb/cohort_probe.py' --selection 'reports/rgb/TRN-20261017-003-selection/selection.json' --cohorts 'reports/rgb/Codex-width-20261017-013/cohorts.json' --output 'reports/rgb/manual-wide-seed17-01' --steps 500 --size 128 --seed 20261017 --threads 4 --learning-rate 0.001 --base-width 16
+```
+
+下一步优先在发生回退的固定小群组记录更细的损失、梯度范数及中间模型，定位优化不稳定，再考虑扩大734图实验，不继续盲目增大网络或挑最好结果。
+
+## 014：离线结果对照页
+
+已有[RGB对照页](RGB对照页.md)可按8张图片、3个初始化编号和3类切换，四图显示RGB/现有标注/原网络/宽网络，分别显示当前图片和8图合计IoU。只读固定末态已有产物，不运行推理/上传/修标，也未改旧FTW网页。实际页面在`reports/rgb/TRN-20261017-014-gallery/index.html`，保留同目录assets；指标和来源可下载。
+
+68个页面文件中64个PNG资产和全部48个预测显示值已从原RGB/原mask/旧新预测独立核对。浏览器72种选择组合、288指标单元格一致，1440/390无横向溢出、四图全加载，键盘焦点/前后翻页/错误事件显示恢复/原生下载一致。浏览器工具拒绝file协议，实际浏览器验证使用只监听127.0.0.1的临时服务；未冒称工具实际双击打开过，验证后服务已关闭。
+
 ## 软件验证
 
 ```powershell
-& '.\.venv-recognition\Scripts\python.exe' -B -m unittest tests.recognition.test_rgb_fitting tests.recognition.test_rgb_diagnostics tests.recognition.test_rgb_cohort_probe -v
+& '.\.venv-recognition\Scripts\python.exe' -B -m unittest tests.recognition.test_rgb_fitting tests.recognition.test_rgb_diagnostics tests.recognition.test_rgb_cohort_probe tests.recognition.test_rgb_gallery -v
 ```
 
-当前23项测试通过。新增学习率测试用相同初始化的一次Adam更新，核对参数变化按学习率比例缩放及根/组/CP元数据；非法值在输出前失败。其余使用合成小图检查曝光/初始化/全池权重、保存加载和拒绝边界；不把软件测试通过当成模型效果通过。原图、原JSON、旧模型、FTW网页和环境保持原样，DeepSeek继续暂缓。
+当前28项测试通过。宽度检查覆盖默认初始化/前向与旧版逐位一致、宽网络有限更新/严格重载/错误结构拒绝，以及非法宽度输出前失败。页面检查覆盖禁止forward、源/像素/矩阵绑定、脚本转义、篡改/越界路径/暂缓样本拒绝和已有输出拒绝。学习率测试核首次Adam参数变化按比例缩放及元数据。其余使用合成小图检查曝光/初始化/全池权重、保存加载和拒绝边界；软件测试通过不等于模型效果通过。原图、原JSON、旧模型、FTW网页和环境保持，DeepSeek继续暂缓。

@@ -78,10 +78,41 @@ class CohortProbeTests(unittest.TestCase):
         selection,config=prepare('params-cohort-'+uuid.uuid4().hex[:6])
         invalid_lr = [True, 0, -.001, float('nan'), float('inf'), 1e-7, .1, '0.0003', None]
         for kwargs in [{'steps':True},{'steps':0},{'steps':501},{'size':33},{'seed':-1},{'threads':0},
-                       *[{'learning_rate':value} for value in invalid_lr]]:
+                       *[{'learning_rate':value} for value in invalid_lr],
+                       *[{'base_width':value} for value in (True,0,9,32,8.0,'16',None)]]:
             out=probe.CASE/('invalid-cohort-'+uuid.uuid4().hex[:6])
             with self.subTest(kwargs=kwargs),self.assertRaises(mod.ProbeError):mod.run_probe(selection,config,out,**kwargs)
             self.assertFalse(out.exists())
+
+    def test_default_model_matches_existing_initialization_and_forward(self):
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(20261017);old=mod.fit.SmallUNet().eval()
+            torch.manual_seed(20261017);default=mod.build_model().eval()
+            self.assertEqual(type(default),type(old))
+            self.assertEqual(mod.fit.state_digest(old.state_dict()),mod.fit.state_digest(default.state_dict()))
+            x=torch.linspace(0,1,3*32*32).reshape(1,3,32,32)
+            with torch.no_grad():self.assertTrue(torch.equal(old(x),default(x)))
+            self.assertEqual(sum(p.numel() for p in default.parameters()),29779)
+
+    def test_wide_model_updates_saves_and_reloads_with_declared_shape(self):
+        selection,config=prepare('wide-cohort-'+uuid.uuid4().hex[:6]);out=probe.CASE/('wide-out-'+uuid.uuid4().hex[:6])
+        result=mod.run_probe(selection,config,out,steps=2,size=32,seed=17,threads=1,base_width=16)
+        summary=mod.fit.read_json(out/'small2/summary.json')
+        cp=torch.load(out/'small2/probe_checkpoint.pt',weights_only=True,map_location='cpu')
+        for obj in (result,summary,cp):
+            self.assertEqual(obj['base_width'],16);self.assertEqual(obj['channel_widths'],[16,32,64]);self.assertEqual(obj['parameter_count'],118307)
+        self.assertNotEqual(summary['initial_parameter_sha256'],summary['final_parameter_sha256'])
+        wide=mod.build_model(16);wide.load_state_dict(cp['state_dict'],strict=True);wide.eval()
+        self.assertEqual(tuple(cp['state_dict']['enc1.0.weight'].shape),(16,3,3,3))
+        self.assertEqual(tuple(cp['state_dict']['head.weight'].shape),(3,16,1,1))
+        for parameter in wide.parameters():self.assertTrue(torch.isfinite(parameter).all())
+        with self.assertRaises(RuntimeError):mod.fit.SmallUNet().load_state_dict(cp['state_dict'],strict=True)
+        _,_,_,cache,_,_=mod.fit.verify_selection(selection,size=32);byid={sid:rgb for sid,rgb,_ in cache}
+        xs=torch.stack([torch.from_numpy(byid[sid].copy()).permute(2,0,1).float()/255 for sid in summary['sample_ids']])
+        with torch.no_grad():pred=wide(xs).argmax(1).numpy()
+        for sid,expected in zip(summary['sample_ids'],pred):
+            with Image.open(out/'small2'/f'{sid}.png') as im:np.testing.assert_array_equal(np.array(im),expected)
+        with self.assertRaises(mod.fit.FittingError):mod.fit.predict(out/'small2/probe_checkpoint.pt',selection,'sample_0',probe.CASE/('wide-reject-'+uuid.uuid4().hex[:6]))
 
     def test_learning_rate_scales_first_update_and_is_recorded(self):
         selection,config=prepare('lr-cohort-'+uuid.uuid4().hex[:6]);states=[]
