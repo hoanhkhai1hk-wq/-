@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,15 @@ _spec=importlib.util.spec_from_file_location('pool_cohort',ROOT/'scripts/rgb/coh
 cohort=importlib.util.module_from_spec(_spec);_spec.loader.exec_module(cohort)
 fit=cohort.fit;diag=cohort.diag
 SCHEMA='agrolake_rgb_pool_diagnostic_v1'
+REWEIGHTED_SCHEMA='agrolake_rgb_pool_reweighted_diagnostic_v1'
+
+
+def training_weights(histogram,ridge_weight_scale=1.0):
+    if isinstance(ridge_weight_scale,bool) or not isinstance(ridge_weight_scale,(int,float)) or not math.isfinite(ridge_weight_scale) or not 0<ridge_weight_scale<=1:
+        raise fit.FittingError('ridge_weight_scale must be finite in (0,1]')
+    weights=fit.class_weights_from_counts(histogram)
+    weights[1]*=ridge_weight_scale
+    return weights
 
 
 def evaluate(model,loader,weights,folder=None,sources=None):
@@ -37,11 +47,12 @@ def evaluate(model,loader,weights,folder=None,sources=None):
             'sample_count':len(rows),**diag.measures(matrix)},rows
 
 
-def train(selection,output,epochs=10,size=128,batch_size=8,seed=20261017,threads=4,root=ROOT):
+def train(selection,output,epochs=10,size=128,batch_size=8,seed=20261017,threads=4,root=ROOT,ridge_weight_scale=1.0):
     for v,n,lo,hi in ((epochs,'epochs',1,20),(size,'size',32,256),(batch_size,'batch_size',1,32),
                       (seed,'seed',0,2**32-1),(threads,'threads',1,8)):
         fit.bounded_int(v,n,lo,hi)
     if size%8:raise fit.FittingError('size must be divisible by eight')
+    training_weights(np.ones(3,dtype=np.int64),ridge_weight_scale)
     sp=fit.artifact(selection,root);out=fit.new_output(output,[sp.parent],root);selection_sha=fit.sha(sp)
     old_threads=torch.get_num_threads()
     try:
@@ -49,7 +60,7 @@ def train(selection,output,epochs=10,size=128,batch_size=8,seed=20261017,threads
         _,selected,ds,cache,hist,ignored=fit.verify_selection(sp,root,size)
         if fit.sha(sp)!=selection_sha:raise fit.FittingError('Selection changed')
         if fit.inside(out,Path(ds.input_dir)) or fit.inside(Path(ds.input_dir),out):raise fit.FittingError('Output overlaps input')
-        weights_np=fit.class_weights_from_counts(hist);weights=torch.tensor(weights_np)
+        weights_np=training_weights(hist,ridge_weight_scale);weights=torch.tensor(weights_np)
         ids=[r[0] for r in cache];sources={r['sample_id']:r for r in ds.records};dataset=fit.CachedImages(cache)
         generator=torch.Generator().manual_seed(seed)
         train_loader=DataLoader(dataset,batch_size=batch_size,shuffle=True,generator=generator,num_workers=0)
@@ -61,11 +72,15 @@ def train(selection,output,epochs=10,size=128,batch_size=8,seed=20261017,threads
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(seed);model=cohort.build_model(16);optimizer=torch.optim.Adam(model.parameters(),lr=.001)
             initial_sha=fit.state_digest(model.state_dict())
-            metadata={'schema':SCHEMA,'size':size,'seed':seed,'threads':threads,'batch_size':batch_size,
+            metadata={'schema':SCHEMA if ridge_weight_scale==1 else REWEIGHTED_SCHEMA,'size':size,'seed':seed,'threads':threads,'batch_size':batch_size,
                 'base_width':16,'class_ids':fit.CLASSES,'class_weights':weights_np.tolist(),
                 'learning_rate':.001,'max_grad_norm':5.0,'selection_sha256':selection_sha,'training_sample_ids':ids,
                 'not_candidate_model':True,'semantic_reviewed':False,'independent_test_available':False,
                 'source_relationship':'unknown','evaluation_scope':'fitting_samples_only'}
+            if ridge_weight_scale!=1:
+                metadata.update(ridge_weight_scale=float(ridge_weight_scale),
+                    base_class_weights=fit.class_weights_from_counts(hist).tolist(),
+                    weight_policy='sqrt_inverse_then_scale_ridge_only')
 
             def snapshot(epoch):
                 if epoch not in milestones:return
@@ -119,7 +134,7 @@ def train(selection,output,epochs=10,size=128,batch_size=8,seed=20261017,threads
             if not equal:raise fit.FittingError('Pool checkpoint roundtrip failed')
         if [r['sample_id'] for r in records]!=ids:raise fit.FittingError('Prediction coverage mismatch')
         fit.write_json(out/'records.json',records)
-        summary={**metadata,'kind':'whole_pool_clipped_diagnostic_training','selection_path':fit.relative(sp,root),
+        summary={**metadata,'kind':'whole_pool_clipped_diagnostic_training' if ridge_weight_scale==1 else 'whole_pool_ridge_reweighted_diagnostic_training','selection_path':fit.relative(sp,root),
             'input_dir':fit.relative(ds.input_dir,root),'input_manifest_sha256':selected['manifest_sha256'],
             'input_policy_sha256':selected['policy_sha256'],'epochs':epochs,'sample_count':len(ids),
             'optimizer_steps':updates,'samples_seen':epochs*len(ids),'exposures_per_sample':exposures,
@@ -132,6 +147,9 @@ def train(selection,output,epochs=10,size=128,batch_size=8,seed=20261017,threads
         (out/'README.md').write_text('734允许池（合成测试可更少）的独立版本诊断训练。所有图片都参加拟合，无独立测试、未核标签语义、非候选。\n'
             '每轮evaluation为固定当轮末态完整同池评估，training_loss为更新中批次损失的加权合计，二者不可混用。\n'
             '固定末态及中间CP含Adam和洗牌状态，仅供复核；预测为诊断网格像素，不报真实面积。\n',encoding='utf-8')
+        if ridge_weight_scale!=1:
+            with (out/'README.md').open('a',encoding='utf-8') as stream:
+                stream.write(f'仅田埂训练权重乘{ridge_weight_scale}；农田和道路保持。CE使用本组权重，不能直接与不同权重的CE排名。\n')
         return summary
     finally:torch.set_num_threads(old_threads)
 
@@ -141,6 +159,7 @@ def main(argv=None):
     for key in ('selection','output'):p.add_argument('--'+key,required=True)
     for key,default in (('epochs',10),('size',128),('batch-size',8),('seed',20261017),('threads',4)):
         p.add_argument('--'+key,type=int,default=default)
+    p.add_argument('--ridge-weight-scale',type=float,default=1.)
     try:
         s=train(**vars(p.parse_args(argv)));print(json.dumps({'seed':s['seed'],'optimizer_steps':s['optimizer_steps']}));return 0
     except (fit.FittingError,fit._input.RGBError,OSError,RuntimeError,ValueError,TypeError,KeyError) as exc:
