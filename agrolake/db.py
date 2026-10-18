@@ -166,6 +166,20 @@ def connect(db_file: Path | None = None) -> sqlite3.Connection:
     return conn
 
 
+def connect_readonly(db_file: Path | None = None) -> sqlite3.Connection:
+    """只读连接。
+
+    问答页的事实查询走这个连接：写操作在 SQLite 层面就被拒绝，
+    不依赖"调用方保证不写"。数据库文件不存在时由调用方先建好主连接。
+    """
+    path = Path(db_file) if db_file is not None else config.db_path()
+    uri = path.resolve().as_uri() + "?mode=ro"
+    conn = sqlite3.connect(uri, uri=True)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
 def _migrate(conn: sqlite3.Connection) -> None:
     """对既有数据库补齐新增列，保留历史数据。"""
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(attribute_records)").fetchall()}
