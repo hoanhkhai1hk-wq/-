@@ -14,7 +14,7 @@ import streamlit as st
 
 from agrolake import config, db, disposition, ingest, quality, reporting, scenes, semantics
 from agrolake import storage
-from agrolake_web import qa_page, recognition_page, rgb_results_page
+from agrolake_web import qa_page, recognition_page, rgb_candidate_page, rgb_results_page
 
 st.set_page_config(page_title="AgroLake 治理底座", layout="wide")
 
@@ -498,7 +498,8 @@ def page_reports(conn):
 
 
 NAV_PAGES = ["首页", "资料导入", "数据目录", "问题处置", "场景关联",
-             "类别规范", "田块识别", "RGB 识别实验", "DeepSeek 问答", "报告导出", "治理总览"]
+             "类别规范", "田块识别", "RGB 图片识别", "RGB 识别实验",
+             "DeepSeek 问答", "报告导出", "治理总览"]
 
 
 def _go(page_name: str) -> None:
@@ -598,6 +599,14 @@ def page_home(conn):
     else:
         st.info("尚无成功识别记录，请到“田块识别”页运行一次。")
 
+    st.markdown(
+        "<div class='ag-card'>🖼️ <b>RGB 图片识别</b>：上传 512×512 RGB 农田图片，"
+        "运行候选识别模型并保存结果与历史，可下载掩膜、叠加图与候选区域表。</div>",
+        unsafe_allow_html=True,
+    )
+    st.button("打开 RGB 图片识别 →", key="home_go_rgb",
+              on_click=_go, args=("RGB 图片识别",))
+
     st.markdown("<div class='ag-section-title'>问题处置：查出问题只是开始</div>",
                 unsafe_allow_html=True)
     st.caption("以下为治理库中的真实处置记录：每个问题版本都有处置前、处置后状态，"
@@ -681,6 +690,8 @@ def main():
             page_category(conn)
         elif page == "田块识别":
             recognition_page.render()
+        elif page == "RGB 图片识别":
+            rgb_candidate_page.render()
         elif page == "RGB 识别实验":
             rgb_results_page.render()
         elif page == "DeepSeek 问答":
