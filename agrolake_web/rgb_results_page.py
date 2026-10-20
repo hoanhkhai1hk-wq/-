@@ -117,6 +117,6 @@ def render() -> None:
     feedback = document.get("feedback_training", {})
     if feedback:
         st.caption(f"另有{feedback.get('feedback_images', '未知')}张局部反馈学习副本；"
-                   f"本轮微调涉及{feedback.get('current_unique_images', '未知')}张图片。"
+                   f"这些对照图对应的微调涉及{feedback.get('current_unique_images', '未知')}张图片。"
                    "原暂缓清单保留，反馈学习结果只表示这些已见图片的拟合。")
     st.caption("面积单位仅为像素，不是平方米或真实田块数量。本页不是独立精度评估，模型仍需改进。")
