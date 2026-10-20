@@ -14,7 +14,7 @@ import streamlit as st
 
 from agrolake import config, db, disposition, ingest, quality, reporting, scenes, semantics
 from agrolake import storage
-from agrolake_web import qa_page, recognition_page
+from agrolake_web import qa_page, recognition_page, rgb_results_page
 
 st.set_page_config(page_title="AgroLake 治理底座", layout="wide")
 
@@ -482,6 +482,7 @@ def main():
         "面向数字农服的影像交付与资料质检（P0 精简治理原型）。"
         "第 8 页“田块识别”已接入本机识别服务运行 FTW v1 8 波段模型；"
         "第 9 页“DeepSeek 问答”用只读查询取事实、由模型做解释，前 7 个治理页结论不含模型推理。"
+        "“RGB 识别实验”页可查看你提供图片的当前识别效果。"
     )
     consume_flash()
     try:
@@ -491,7 +492,7 @@ def main():
         return
     try:
         tabs = st.tabs(["治理概览", "资料导入", "数据目录", "问题处置",
-                        "场景关联", "类别规范", "报告导出", "田块识别", "DeepSeek 问答"])
+                        "场景关联", "类别规范", "报告导出", "田块识别", "DeepSeek 问答", "RGB 识别实验"])
         with tabs[0]:
             page_overview(conn)
         with tabs[1]:
@@ -510,6 +511,8 @@ def main():
             recognition_page.render()
         with tabs[8]:
             qa_page.render(conn)
+        with tabs[9]:
+            rgb_results_page.render()
     finally:
         # 每次脚本运行独立连接，结束即关闭，避免跨线程复用与泄漏。
         try:
