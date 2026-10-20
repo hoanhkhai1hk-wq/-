@@ -132,13 +132,13 @@ def _recognition_facts(conn: sqlite3.Connection, scene_id: str | None) -> dict[s
     try:
         if scene_id:
             jobs = conn.execute(
-                "SELECT job_id, status, error, created_at FROM rec_jobs"
+                "SELECT job_id, status, error, created_at, sample_kind, input_sha256 FROM rec_jobs"
                 " WHERE scene_id = ? ORDER BY job_id DESC",
                 (scene_id,),
             ).fetchall()
         else:
             jobs = conn.execute(
-                "SELECT job_id, status, error, created_at FROM rec_jobs"
+                "SELECT job_id, status, error, created_at, sample_kind, input_sha256 FROM rec_jobs"
                 " ORDER BY job_id DESC"
             ).fetchall()
     except sqlite3.Error:
@@ -166,6 +166,7 @@ def _recognition_facts(conn: sqlite3.Connection, scene_id: str | None) -> dict[s
         "jobs": [dict(r) for r in jobs],
         "runs": [dict(r) for r in runs],
         "classes": [dict(r) for r in classes],
+        "unique_input_count": len({j["input_sha256"] for j in jobs if j["input_sha256"]}),
         "note": "",
     }
 
@@ -316,11 +317,25 @@ def _scene_block(
     gaps: list[str] = []
     if rec["available"]:
         lines.append(f"- 识别任务 {len(rec['jobs'])} 个")
+        source_labels = {"public_adapter_sample": "公开适配样例",
+                         "user_upload": "上传资料", "synthetic_test": "合成软件测试"}
+        source_counts: dict[str, int] = {}
+        for job in rec["jobs"]:
+            label = source_labels.get(job["sample_kind"], "来源类别未明确")
+            source_counts[label] = source_counts.get(label, 0) + 1
+        lines.append("- 识别资料来源：" + "、".join(
+            f"{label} {count} 次任务" for label, count in source_counts.items()))
+        lines.append(f"- 按文件摘要去重后的识别输入 {rec['unique_input_count']} 份；"
+                     "同图重复运行不算独立样本，文件去重数也不代表独立场景数。")
         for r in rec["runs"][:5]:
+            region_count = ("未产生" if r["field_count"] is None
+                            else f"{r['field_count']} 个")
             lines.append(
-                f"  · 运行 #{r['run_id']}：{r['status']}，田块数 {r['field_count']}，"
+                f"  · 运行 #{r['run_id']}：{r['status']}，候选连通区域 {region_count}，"
                 f"耗时 {r['elapsed_seconds']}s"
             )
+        lines.append("- 识别统计口径：候选连通区域不是经人工确认的真实田块数；"
+                     "无独立真值，不报告识别准确率；像素不能直接换算为实测平方米。")
         for c in rec["classes"][:8]:
             lines.append(f"  · 类别 {c['class_value']}（{c['meaning']}）：{c['pixels']} 像素")
     else:

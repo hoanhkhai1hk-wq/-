@@ -395,6 +395,36 @@ class FactsTest(unittest.TestCase):
         self.assertIn("识别结果：暂无", b.text)
         self.assertTrue(any("识别结果" in g for g in b.gaps))
 
+    def test_recognition_candidates_are_not_confirmed_parcels(self):
+        # Minimal synthetic recognition-table contract; no inference or external API.
+        writer = db.connect(self.path)
+        writer.executescript("""
+            CREATE TABLE rec_jobs(job_id, scene_id, status, error, created_at, sample_kind, input_sha256);
+            CREATE TABLE rec_runs(run_id, job_id, status, field_count, elapsed_seconds, finished_at);
+            CREATE TABLE rec_class_counts(job_id, class_value, meaning, pixels);
+            INSERT INTO rec_jobs VALUES (1,'S1','succeeded',NULL,'2026-10-20','public_adapter_sample','same-image-hash');
+            INSERT INTO rec_jobs VALUES (2,'S1','failed',NULL,'2026-10-20','public_adapter_sample','same-image-hash');
+            INSERT INTO rec_runs VALUES (1,1,'succeeded',722,18.156,'2026-10-20');
+            INSERT INTO rec_runs VALUES (2,2,'failed',NULL,1.0,'2026-10-20');
+            INSERT INTO rec_class_counts VALUES (1,1,'field interior',74580);
+        """)
+        writer.commit()
+        writer.close()
+        bundle = qa_facts.build(self.ro, "scene", scene_id="S1")
+        self.assertIn("候选连通区域 722 个", bundle.text)
+        self.assertIn("候选连通区域 未产生", bundle.text)
+        self.assertIn("不是经人工确认的真实田块数", bundle.text)
+        self.assertIn("无独立真值，不报告识别准确率", bundle.text)
+        self.assertIn("像素不能直接换算为实测平方米", bundle.text)
+        self.assertNotIn("田块数 722", bundle.text)
+        self.assertIn("公开适配样例 2 次任务", bundle.text)
+        self.assertIn("去重后的识别输入 1 份", bundle.text)
+        self.assertIn("同图重复运行不算独立样本", bundle.text)
+        self.assertEqual(bundle.snapshot["recognition"]["unique_input_count"], 1)
+        counts = {run["run_id"]: run["field_count"]
+                  for run in bundle.snapshot["recognition"]["runs"]}
+        self.assertEqual(counts, {1: 722, 2: None})
+
     def test_unknown_scope_falls_back(self):
         b = qa_facts.build(self.ro, "乱写")
         self.assertEqual(b.scope, "overview")

@@ -20,23 +20,44 @@ st.set_page_config(page_title="AgroLake 治理底座", layout="wide")
 
 ACCENT = "#17685D"
 WARN = "#B16D13"
-INK = "#20313A"
-BG = "#F5F7F8"
+INK = "#1D1D1F"
+BG = "#FBFBFD"
 SURFACE = "#FFFFFF"
+GRAY = "#6E6E73"
 
 st.markdown(
     f"""
     <style>
       .stApp {{ background: {BG}; color: {INK};
-        font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif; }}
-      .block-container {{ padding-top: 1.6rem; max-width: 1200px; }}
-      h1, h2, h3 {{ color: {ACCENT}; letter-spacing: .01em; }}
-      .ag-card {{ background: {SURFACE}; border: 1px solid #E1E6E8;
-        border-radius: 8px; padding: 14px 16px; }}
-      .ag-kpi {{ font-size: 1.7rem; font-weight: 600; color: {ACCENT}; }}
+        font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }}
+      .block-container {{ padding-top: 4.5rem; max-width: 1180px; }}
+      h1, h2, h3 {{ color: {INK}; letter-spacing: -0.01em; font-weight: 700; }}
+      .ag-hero-eyebrow {{ color: {ACCENT}; font-size: 0.95rem; font-weight: 600;
+        letter-spacing: 0.06em; margin-bottom: 0.4rem; }}
+      .ag-hero-title {{ font-size: 2.7rem; line-height: 1.25; font-weight: 700;
+        letter-spacing: -0.015em; color: {INK}; margin: 0 0 0.8rem 0; }}
+      .ag-hero-sub {{ font-size: 1.12rem; line-height: 1.75; color: {GRAY};
+        max-width: 860px; margin-bottom: 1.6rem; }}
+      .ag-flow {{ display: flex; align-items: stretch; gap: 0; margin: 0.4rem 0 1.8rem 0; }}
+      .ag-flow-step {{ flex: 1; background: {SURFACE}; border: 1px solid #E8E8ED;
+        padding: 0.9rem 0.6rem; text-align: center; }}
+      .ag-flow-step:first-child {{ border-radius: 14px 0 0 14px; }}
+      .ag-flow-step:last-child {{ border-radius: 0 14px 14px 0; }}
+      .ag-flow-step + .ag-flow-step {{ border-left: none; }}
+      .ag-flow-emoji {{ font-size: 1.5rem; }}
+      .ag-flow-label {{ font-size: 0.92rem; font-weight: 600; color: {INK}; margin-top: 0.35rem; }}
+      .ag-flow-hint {{ font-size: 0.78rem; color: {GRAY}; margin-top: 0.15rem; }}
+      .ag-card {{ background: {SURFACE}; border: 1px solid #E8E8ED;
+        border-radius: 16px; padding: 18px 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04); }}
+      .ag-kpi {{ font-size: 1.9rem; font-weight: 700; color: {INK};
+        font-variant-numeric: tabular-nums; }}
+      .ag-kpi-label {{ font-size: 0.88rem; color: {GRAY}; margin-top: 0.2rem; }}
       .ag-warn {{ color: {WARN}; font-weight: 600; }}
-      .ag-sub {{ color: #5B6B73; font-size: .85rem; }}
+      .ag-sub {{ color: {GRAY}; font-size: 0.85rem; }}
+      .ag-section-title {{ font-size: 1.35rem; font-weight: 700; margin: 2.2rem 0 0.9rem 0; }}
       div[data-testid="stMetricValue"] {{ color: {ACCENT}; }}
+      section[data-testid="stSidebar"] {{ background: {SURFACE}; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -476,14 +497,169 @@ def page_reports(conn):
     )
 
 
-def main():
-    st.title("AgroLake · 农智数湖治理底座")
-    st.caption(
-        "面向数字农服的影像交付与资料质检（P0 精简治理原型）。"
-        "第 8 页“田块识别”已接入本机识别服务运行 FTW v1 8 波段模型；"
-        "第 9 页“DeepSeek 问答”用只读查询取事实、由模型做解释，前 7 个治理页结论不含模型推理。"
-        "“RGB 识别实验”页可查看你提供图片的当前识别效果。"
+NAV_PAGES = ["首页", "资料导入", "数据目录", "问题处置", "场景关联",
+             "类别规范", "田块识别", "RGB 识别实验", "DeepSeek 问答", "报告导出", "治理总览"]
+
+
+def _go(page_name: str) -> None:
+    """导航跳转回调（在脚本重跑前执行，可安全改 widget 状态）。"""
+    st.session_state["nav_page"] = page_name
+
+
+def _latest_recognition(conn):
+    """取最近一次成功的识别运行（字段名与服务库表 rec_runs 对齐）。"""
+    try:
+        row = conn.execute(
+            "SELECT r.field_count, r.output_relpath, r.finished_at, j.sample_kind "
+            "FROM rec_runs r JOIN rec_jobs j ON j.job_id = r.job_id "
+            "WHERE r.status = 'succeeded' ORDER BY r.run_id DESC LIMIT 1"
+        ).fetchone()
+        total = conn.execute(
+            "SELECT COUNT(*) AS c FROM rec_runs WHERE status = 'succeeded'"
+        ).fetchone()["c"]
+    except Exception:
+        return None, 0
+    return row, total
+
+
+def page_home(conn):
+    """首页：评委第一屏。主张、动线、真实 KPI、主视觉、处置闭环、AI 直达。"""
+    s = scenes.summary(conn)
+    rec_row, rec_total = _latest_recognition(conn)
+    field_count = rec_row["field_count"] if rec_row else None
+    n_checks = conn.execute("SELECT COUNT(*) AS c FROM quality_checks").fetchone()["c"]
+    n_disp = conn.execute("SELECT COUNT(*) AS c FROM dispositions").fetchone()["c"]
+
+    st.markdown(
+        "<div class='ag-hero-eyebrow'>第三届“兴智杯” · 云智专项赛</div>"
+        "<div class='ag-hero-title'>数据先治理，AI 才可信。</div>"
+        "<div class='ag-hero-sub'>AgroLake 面向数字农服：登记影像与台账资料，"
+        "检查质量、追溯来源，查看农田识别结果并保存复核意见。"
+        "当前为本地原型，治理样例包含合成资料，识别示范使用公开影像。</div>",
+        unsafe_allow_html=True,
     )
+
+    flow = [
+        ("📥", "数据接入", "影像与台账入库"),
+        ("🧹", "质量治理", "规则质检与处置"),
+        ("🛰️", "AI 识别", "FTW 田块圈定"),
+        ("👁️", "人工复核", "意见留痕"),
+        ("📄", "报告导出", "一键生成报告"),
+    ]
+    cells = "".join(
+        f"<div class='ag-flow-step'><div class='ag-flow-emoji'>{e}</div>"
+        f"<div class='ag-flow-label'>{t}</div><div class='ag-flow-hint'>{h}</div></div>"
+        for e, t, h in flow
+    )
+    st.markdown(f"<div class='ag-flow'>{cells}</div>", unsafe_allow_html=True)
+
+    kpis = [
+        ("治理资产", f"{s['total_versions']}", "份版本 · 支持来源追溯", "数据目录"),
+        ("质检执行", f"{n_checks}", "条规则检查记录", "治理总览"),
+        ("问题处置", f"{n_disp}", "次操作 · 前后状态留痕", "问题处置"),
+        ("候选连通区域", f"{field_count if field_count is not None else '—'}",
+         f"个区域 · {rec_total} 次已保存运行", "田块识别"),
+    ]
+    cols = st.columns(4)
+    for col, (label, value, hint, target) in zip(cols, kpis):
+        with col:
+            st.markdown(
+                f"<div class='ag-card'><div class='ag-kpi'>{value}</div>"
+                f"<div class='ag-kpi-label'>{label}</div>"
+                f"<div class='ag-sub'>{hint}</div></div>",
+                unsafe_allow_html=True,
+            )
+            st.button("查看明细 →", key=f"home_go_{target}",
+                      on_click=_go, args=(target,), use_container_width=True)
+
+    st.markdown("<div class='ag-section-title'>AI 识别实景</div>", unsafe_allow_html=True)
+    if rec_row:
+        preview = (Path(__file__).parent / "data" / "service" / "runs"
+                   / rec_row["output_relpath"] / "preview.png")
+        c_img, c_txt = st.columns([3, 2])
+        with c_img:
+            if preview.exists():
+                st.image(str(preview), use_container_width=True)
+            else:
+                st.info("识别预览图暂缺，请到“田块识别”页运行一次识别。")
+        with c_txt:
+            sample_label = {"public_adapter_sample": "公开适配样例",
+                            "user_upload": "上传影像",
+                            "synthetic_test": "合成软件测试"}.get(
+                                rec_row["sample_kind"], "来源类别待核的影像")
+            st.markdown(
+                "**FTW v1（8 波段）本机推理结果**\n\n"
+                f"{sample_label}的最近一次成功运行得到 **{field_count} 个候选连通区域**。"
+                "输入、掩膜和区域像素表保存在识别记录中。\n\n"
+                "候选区域未经人工确认；同图复跑不等于新增独立场景，像素也不能直接换算为实测面积。"
+            )
+            st.button("去田块识别页亲手跑一次 →", key="home_go_rec2",
+                      on_click=_go, args=("田块识别",))
+    else:
+        st.info("尚无成功识别记录，请到“田块识别”页运行一次。")
+
+    st.markdown("<div class='ag-section-title'>问题处置：查出问题只是开始</div>",
+                unsafe_allow_html=True)
+    st.caption("以下为治理库中的真实处置记录：每个问题版本都有处置前、处置后状态，"
+               "处置可撤销、全程留痕——这正是“治理”与“只报警”的区别。")
+    rows = conn.execute(
+        "SELECT version_id, action, reason, before_json, after_json, created_at "
+        "FROM dispositions ORDER BY disp_id DESC LIMIT 5"
+    ).fetchall()
+    import json as _json
+    table = []
+    action_name = {"isolate": "隔离", "unisolate": "解除隔离",
+                   "mark_duplicate": "标记重复", "unmark_duplicate": "取消重复标记"}
+    status_name = {"active": "有效", "isolated": "已隔离", "duplicate": "重复"}
+    for r in rows:
+        before = status_name.get(_json.loads(r["before_json"]).get("status"),
+                                 _json.loads(r["before_json"]).get("status"))
+        after = status_name.get(_json.loads(r["after_json"]).get("status"),
+                                _json.loads(r["after_json"]).get("status"))
+        table.append({
+            "版本": f"版本 {r['version_id']}",
+            "处置": action_name.get(r["action"], r["action"]),
+            "原因": r["reason"],
+            "状态变化": f"{before} → {after}",
+            "时间": str(r["created_at"])[:10],
+        })
+    if table:
+        st.dataframe(table, use_container_width=True, hide_index=True)
+
+    st.markdown("<div class='ag-section-title'>直接向 AI 提问</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='ag-card'>🤖 <b>DeepSeek 问答</b>已接入治理事实库：它用只读查询取"
+               "数据再作答，页面附事实与来源，模型解释仍需复核。试着问它："
+        "“当前批次待复核的资料有哪些？”</div>",
+        unsafe_allow_html=True,
+    )
+    st.button("打开 DeepSeek 问答 →", key="home_go_qa",
+              on_click=_go, args=("DeepSeek 问答",))
+
+    st.markdown("<div class='ag-section-title'>演示动线（建议顺序）</div>",
+                unsafe_allow_html=True)
+    st.markdown(
+        "1. **资料导入** — 一份影像如何入库并被质检拦下或放行\n"
+        "2. **数据目录** — 每份资产的版本、来源与血缘\n"
+        "3. **问题处置** — 问题版本如何隔离、订正、复检\n"
+        "4. **田块识别** — AI 现场推理 + 人工复核订正\n"
+        "5. **RGB 识别实验** — 普通农田图片识别效果查看\n"
+        "6. **DeepSeek 问答** — 向 AI 追问治理现状\n"
+        "7. **报告导出** — 生成带统计口径的治理报告"
+    )
+
+
+
+
+def main():
+    with st.sidebar:
+        st.markdown("### 🌱 AgroLake 农智数湖")
+        st.caption("面向数字农服的多模态数据治理与田块识别平台")
+        page = st.radio("导航", NAV_PAGES, key="nav_page", label_visibility="collapsed")
+        st.divider()
+        st.caption("第三届“兴智杯”全国人工智能创新应用大赛\n"
+                   "赛题：人工智能数据湖与数据治理创新方案赛（云智专项赛）\n"
+                   "当前为方案验证阶段：治理样例含合成资料，FTW使用公开影像，RGB实验使用用户图片。")
     consume_flash()
     try:
         conn = get_conn()
@@ -491,28 +667,28 @@ def main():
         st.error(f"数据库初始化失败：{exc}")
         return
     try:
-        tabs = st.tabs(["治理概览", "资料导入", "数据目录", "问题处置",
-                        "场景关联", "类别规范", "报告导出", "田块识别", "DeepSeek 问答", "RGB 识别实验"])
-        with tabs[0]:
-            page_overview(conn)
-        with tabs[1]:
+        if page == "首页":
+            page_home(conn)
+        elif page == "资料导入":
             page_import(conn)
-        with tabs[2]:
+        elif page == "数据目录":
             page_catalog(conn)
-        with tabs[3]:
+        elif page == "问题处置":
             page_disposition(conn)
-        with tabs[4]:
+        elif page == "场景关联":
             page_scenes(conn)
-        with tabs[5]:
+        elif page == "类别规范":
             page_category(conn)
-        with tabs[6]:
-            page_reports(conn)
-        with tabs[7]:
+        elif page == "田块识别":
             recognition_page.render()
-        with tabs[8]:
-            qa_page.render(conn)
-        with tabs[9]:
+        elif page == "RGB 识别实验":
             rgb_results_page.render()
+        elif page == "DeepSeek 问答":
+            qa_page.render(conn)
+        elif page == "报告导出":
+            page_reports(conn)
+        elif page == "治理总览":
+            page_overview(conn)
     finally:
         # 每次脚本运行独立连接，结束即关闭，避免跨线程复用与泄漏。
         try:
