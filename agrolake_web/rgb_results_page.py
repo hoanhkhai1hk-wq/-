@@ -56,7 +56,9 @@ def render() -> None:
         st.write(message)
     progress = training.get("progress", [])
     if progress and training.get("state") in {"reviewed", "reviewed_not_adopted"}:
-        st.caption("本轮训练已完成：3组，每组128步。")
+        totals = {int(row.get("total", 128)) for row in progress}
+        detail = f"每组{next(iter(totals))}步" if len(totals) == 1 else "各组步数见记录"
+        st.caption(f"本轮训练已完成：{len(progress)}组，{detail}。")
     elif progress:
         st.caption("训练进度（最近一次记录）")
         for column, row in zip(st.columns(len(progress)), progress):
@@ -85,6 +87,8 @@ def render() -> None:
         panel = panels[chosen]
     if case.get("participated_in_training"):
         st.caption("这张图片参与过训练；较高的参考重合度不能代表新图识别效果。")
+        if case.get("training_role") == "derived_human_feedback_fit":
+            st.caption("本轮用到了你确认的局部类别反馈；完整边界未审核，不确定区域继续忽略。")
     else:
         st.caption("这张图片仅作局部参考；只有部分区域得到确认，完整边界尚未审核。")
     st.caption("黄色是预测田埂，灰色是预测道路；田块保持原图颜色。")
@@ -110,4 +114,9 @@ def render() -> None:
     st.caption(f"训练范围：{counts.get('experiment_train', '未知')}张；"
                f"暂缓：{counts.get('deferred_alias', '未知')}张；"
                f"排除：{counts.get('excluded_user_decision', '未知')}张。")
+    feedback = document.get("feedback_training", {})
+    if feedback:
+        st.caption(f"另有{feedback.get('feedback_images', '未知')}张局部反馈学习副本；"
+                   f"本轮微调涉及{feedback.get('current_unique_images', '未知')}张图片。"
+                   "原暂缓清单保留，反馈学习结果只表示这些已见图片的拟合。")
     st.caption("面积单位仅为像素，不是平方米或真实田块数量。本页不是独立精度评估，模型仍需改进。")
