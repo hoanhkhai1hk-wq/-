@@ -44,12 +44,50 @@ def export_checks_csv(conn: sqlite3.Connection, path: Path) -> Path:
     return _write_csv(Path(path), header, rows)
 
 
+def _pct(value) -> str:
+    if value is None:
+        return "—"
+    return f"{value * 100:.1f}%"
+
+
+def _check_distribution(conn: sqlite3.Connection) -> dict:
+    """按规则条目统计质检分布（每个版本每条规则取最近一次结果）。"""
+    counts = {"pass": 0, "warn": 0, "block": 0, "na": 0}
+    for v in scenes.list_versions(conn):
+        for c in scenes.list_checks(conn, v["version_id"]):
+            if c["status"] in counts:
+                counts[c["status"]] += 1
+    total = sum(counts.values())
+    applicable = total - counts["na"]
+    return {
+        **counts,
+        "total": total,
+        "applicable": applicable,
+        "pass_rate": (counts["pass"] / applicable) if applicable else None,
+    }
+
+
+def _version_distribution(conn: sqlite3.Connection) -> dict:
+    """当前有效版本的总体质检结论分布。"""
+    counts = {"pass": 0, "warn": 0, "block": 0, "na": 0}
+    for v in scenes.current_versions(conn):
+        if v["overall_status"] in counts:
+            counts[v["overall_status"]] += 1
+    counts["flagged"] = counts["warn"] + counts["block"]
+    counts["counted"] = sum(
+        counts[k] for k in ("pass", "warn", "block")
+    )
+    return counts
+
+
 def build_report(conn: sqlite3.Connection) -> dict:
     from . import db as _db
 
     return {
         "schema_version": _db.get_meta(conn, "schema_version"),
         "summary": scenes.summary(conn),
+        "check_distribution": _check_distribution(conn),
+        "version_distribution": _version_distribution(conn),
         "scenes": [
             {
                 "scene_id": s["scene_id"],
@@ -88,16 +126,30 @@ def export_report_markdown(conn: sqlite3.Connection, path: Path) -> Path:
     rep = build_report(conn)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["# AgroLake P0 治理报告", ""]
+    lines = ["# AgroLake 治理报告", ""]
     s = rep["summary"]
+    q = s["quality_pass_rate"]
+    cd = rep["check_distribution"]
+    vd = rep["version_distribution"]
     lines += [
         f"- 资产版本总数：{s['total_versions']}",
         f"- 导入事件总数：{s['total_import_events']}",
         f"- 当前有效版本：{s['current_versions']}",
-        f"- 质量通过率：{s['quality_pass_rate']['pass_rate']}"
-        f"（分母：{s['quality_pass_rate']['denominator']}；排除：{s['quality_pass_rate']['excluded']}）",
-        f"- 关联覆盖率：{s['association_coverage']['coverage']}"
+        f"- 版本质量通过率：{_pct(q['pass_rate'])}"
+        f"（{q['passed_versions']}/{q['counted_versions']} 个当前有效版本通过；"
+        f"分母：{q['denominator']}；排除：{q['excluded']}）",
+        f"- 当前有效版本质检分布：通过 {vd['pass']} · 警告 {vd['warn']} · "
+        f"拦下 {vd['block']}（共 {vd['flagged']} 个版本被标记待处置）",
+        f"- 规则条目通过率：{_pct(cd['pass_rate'])}"
+        f"（{cd['pass']}/{cd['applicable']} 条适用规则通过；"
+        f"全部 {cd['total']} 条中警告 {cd['warn']} · 拦下 {cd['block']} · 不适用 {cd['na']}）",
+        f"- 关联覆盖率：{_pct(s['association_coverage']['coverage'])}"
         f"（分母：{s['association_coverage']['denominator']}）",
+        "",
+        "> 口径说明：版本通过率的分母是当前有效版本数，样本规模较小时波动很大；"
+        "当样本集中包含为规则验证故意构造的问题样本（空文件、损坏文件、模糊影像等）时，"
+        "该通过率反映的是样本构成，不直接代表真实生产数据的质量水平。"
+        "评价治理效果应结合规则条目通过率、问题版本的标记与处置情况综合判断。",
         "",
         "## 版本清单",
         "",
