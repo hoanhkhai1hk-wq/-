@@ -16,6 +16,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from agrolake import db as p0_db
+from agrolake import rgb_governance
 from agrolake.rgb_jobs import (
     ARTIFACT_NAMES,
     ROOT,
@@ -211,9 +213,79 @@ def _render_job(backend: RgbCandidateJobs, job_id: str,
     _pixel_table(result)
     _regions_table(result.get("regions") or [])
     _downloads(backend, job_id, scope)
+    _registration_section(job_id, scope)
     st.caption("说明：当前为候选模型，尚未用独立新图评估识别精度；"
                "候选区域数量与像素面积来自固定程序统计，面积仅为像素，"
                "不能等同真实田块数量或平方米。")
+
+
+def _registration_section(job_id: str, scope: str) -> None:
+    """数据目录登记（INT-20261021-001）。
+
+    只有显式点击按钮才登记；普通浏览/刷新/历史查看只做只读状态查询。
+    已登记展示同样经过核验；损坏/失败作业在上方已提前返回，不会到达这里。
+    """
+    st.markdown("---")
+    st.markdown("**数据目录登记**")
+    st.caption(
+        "把本次成功结果的两份派生资产（512×512 无损 PNG 影像 + JSON 识别统计）"
+        "登记进 P0 数据目录并建立链接；登记只读本作业，不触发识别。"
+        "重复点击返回既有链接并重新核验。")
+    try:
+        ro = p0_db.connect_readonly()
+    except Exception as exc:
+        st.error(f"P0 只读连接失败，无法读取登记状态：{exc}")
+        return
+    try:
+        status = rgb_governance.link_status(ro, job_id)
+    except Exception as exc:
+        st.error(f"登记状态读取失败：{exc}")
+        return
+    finally:
+        ro.close()
+    if status.get("registered"):
+        if status.get("intact"):
+            quality_zh = {"pass": "通过", "warn": "警告", "block": "阻断", "na": "不适用"}
+            st.success(
+                f"已登记：场景 {status['scene_id']} · "
+                f"派生PNG版本 #{status['image_version_id']}"
+                f"（质检 {quality_zh.get(status.get('image_quality'), '未知')}） · "
+                f"统计JSON版本 #{status['stats_version_id']}"
+                f"（质检 {quality_zh.get(status.get('stats_quality'), '未知')}） · "
+                f"登记时间 {status.get('created_at', '未知')}")
+        else:
+            st.warning(
+                f"已有登记记录，但本次核验未通过：{status.get('problem')}；"
+                "在核验恢复前请勿采信该登记为完好。")
+    if st.button("登记到数据目录",
+                 key=f"rgb_register_{scope}_{job_id}",
+                 help="仅显式点击才登记；只登记当前这条成功记录"):
+        try:
+            reg_conn = p0_db.connect()
+        except Exception as exc:
+            st.error(f"P0 连接失败：{exc}")
+            return
+        try:
+            result = rgb_governance.register(reg_conn, job_id)
+        except Exception as exc:
+            st.error(f"登记失败：{exc}")
+            return
+        finally:
+            reg_conn.close()
+        reg = result["registration"]
+        if result["created"]:
+            st.success(
+                f"登记完成：场景 {reg['scene_id']} · "
+                f"派生PNG版本 #{reg['image_version_id']} · "
+                f"统计JSON版本 #{reg['stats_version_id']}")
+        else:
+            st.info(
+                f"该作业此前已登记（本次已重新核验通过）：场景 {reg['scene_id']} · "
+                f"派生PNG版本 #{reg['image_version_id']} · "
+                f"统计JSON版本 #{reg['stats_version_id']}")
+        st.caption("质检摘要：" + result.get("quality_summary", "未知"))
+        st.caption("边界：登记的是派生 PNG 与统计 JSON，质检不代表原始输入"
+                   "已通过 P0 质检；像素不是平方米，候选区域不是已确认田块。")
 
 
 def render() -> None:

@@ -395,7 +395,7 @@ def page_scenes(conn):
     else:
         st.markdown("<span class='ag-warn'>该场景暂无当前属性资料</span>", unsafe_allow_html=True)
 
-    st.markdown("### 复核文本")
+    st.markdown("### 文本记录")
     text_rows = []
     for m in sc["roles"]["text"]:
         v = by_id.get(m["version_id"])
@@ -416,7 +416,7 @@ def page_scenes(conn):
             width="stretch", hide_index=True,
         )
     else:
-        st.markdown("<span class='ag-warn'>该场景暂无当前复核文本</span>", unsafe_allow_html=True)
+        st.markdown("<span class='ag-warn'>该场景暂无当前文本记录</span>", unsafe_allow_html=True)
 
     issues = scenes.scene_issues(conn)
     if issues:

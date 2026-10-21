@@ -376,6 +376,11 @@ class FactsTest(unittest.TestCase):
             b = qa_facts.build(self.ro, scope)
             self.assertEqual(b.scope, scope)
             self.assertTrue(b.text.strip())
+            if scope == "rgb_job":
+                self.assertTrue(b.gaps)
+                self.assertEqual(b.snapshot["status"], "invalid")
+                self.assertNotIn("native_class_counts", b.snapshot)
+                continue
             self.assertIn("程序从 SQLite 直接统计", b.text)
             self.assertTrue(b.citations)
 

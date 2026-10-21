@@ -53,7 +53,7 @@ DeepSeek 问答已有接入代码与历史成功调用记录；2026-10-20只读�
 & .\.venv-p0\Scripts\python.exe scripts/p0/run_acceptance.py
 ```
 
-RGB网页任务保存在独立的`data/rgb_candidate/runs.sqlite3`，包含当次模型清单快照、候选区域与三类像素统计；尚未并入P0场景查询或DeepSeek事实摘要。2026-10-21已验证示例/实际上传、12份原生下载及刷新历史恢复，仍不代表独立农业精度。
+RGB网页任务保存在独立的`data/rgb_candidate/runs.sqlite3`，包含当次模型清单快照、候选区域与三类像素统计。成功结果可显式登记为P0派生PNG和JSON资产，并在DeepSeek问答选择对应RGB任务读取已核事实；普通查看不登记、不推理、不调用大模型。参见[RGB治理与问答](docs/RGB治理与问答.md)。2026-10-21已验证真实网页登记、来源核验与重复登记，仍不代表独立农业精度。
 
 ## 开发方式
 

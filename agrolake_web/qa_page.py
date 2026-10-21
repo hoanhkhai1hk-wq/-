@@ -12,20 +12,43 @@
 """
 from __future__ import annotations
 
+import hashlib
+import json
+import re
 import streamlit as st
 
-from agrolake import db, deepseek_client as ds, qa_facts, qa_store, scenes
+from agrolake import db, deepseek_client as ds, qa_facts, qa_store, rgb_facts, scenes
 
 _NS = "qa"
 
-SCOPE_ORDER = ["batch_review", "scene", "governance_report", "overview"]
+SCOPE_ORDER = ["batch_review", "scene", "governance_report", "overview", "rgb_job"]
 
 QUICK_QUESTIONS = {
     "batch_review": "当前批次待复核的资料有哪些？分别是什么原因？",
     "scene": "这个场景的质量和识别结果怎么样？还缺哪些资料？",
     "governance_report": "基于现在的实际指标，给出一份治理报告：整体状态、主要问题、下一步建议。",
     "overview": "现在有多少资料、质量通过率和关联覆盖率分别是多少？",
+    "rgb_job": "这个 RGB 识别任务的结果和边界怎么样？有哪些需要人工注意的地方？",
 }
+
+RGB_STATUS_ZH = {"running": "运行中", "succeeded": "成功", "failed": "失败"}
+
+
+def _context_key(scope: str, rgb_job_id: str | None, scene_id) -> str:
+    """回答绑定上下文：口径 + RGB任务 + 场景。切换任一项后不会串回答。"""
+    rgb = rgb_job_id if scope == "rgb_job" else None
+    scene = scene_id if scope in ("scene", "governance_report") else None
+    return f"{scope}|{rgb or ''}|{scene or ''}"
+
+
+def _facts_key(bundle) -> str:
+    """Bind answers to actual facts, ignoring only the query generation time."""
+    snapshot = {k: v for k, v in bundle.snapshot.items() if k != "generated_at"}
+    text = re.sub(r"(?<=统计时点 )\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)?",
+                  "<查询时点>", bundle.text)
+    payload = [snapshot, text, bundle.citations, bundle.gaps]
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False,
+                         sort_keys=True).encode("utf-8")).hexdigest()
 
 
 def _state(key: str, default=None):
@@ -165,6 +188,21 @@ def _render_history(conn) -> None:
         st.text(rec["answer"] or "（本次没有回答）")
 
 
+def _rgb_job_options() -> dict[str, str | None]:
+    """只读列出 RGB 任务（明确 id/来源/状态）；缺库或为空时正常显示。"""
+    listing = rgb_facts.list_jobs()
+    if not listing.get("available"):
+        return {"（RGB 作业库不可用）": None}
+    if not listing.get("jobs"):
+        return {"（暂无 RGB 识别任务）": None}
+    opts: dict[str, str | None] = {"（选择 RGB 任务）": None}
+    for j in listing["jobs"]:
+        label = (f"{j['id'][:8]}… · {j['source_name'][:20]} · "
+                 f"{RGB_STATUS_ZH.get(j['status'], j['status'])}")
+        opts[label] = j["id"]
+    return opts
+
+
 def render(conn) -> None:
     """入口：由 app.py 的标签页调用，``conn`` 是主可写连接（只用来写 qa_runs）。"""
     st.subheader("DeepSeek 数据问答")
@@ -195,6 +233,18 @@ def render(conn) -> None:
             key=f"{_NS}_scene",
             disabled=not bool(scene_ids) or scope not in ("scene", "governance_report"),
         )
+        rgb_opts = _rgb_job_options()
+        rgb_pick = st.selectbox(
+            "RGB 任务（仅“RGB 识别任务事实”用）",
+            list(rgb_opts),
+            key=f"{_NS}_rgb_job",
+            disabled=scope != "rgb_job",
+        )
+    rgb_job_id = rgb_opts.get(rgb_pick)
+
+    # 回答按上下文绑定：口径/任务/场景任一变化后，旧回答不挂在新引用下。
+    ctx = _context_key(scope, rgb_job_id,
+                       scene_pick if scene_ids else None)
 
     # 事实查询走只读连接：写操作在 SQLite 层就被拒绝
     try:
@@ -204,7 +254,9 @@ def render(conn) -> None:
         return
     try:
         bundle = qa_facts.build(
-            ro, scope, scene_id=scene_pick if scene_ids else None
+            ro, scope,
+            scene_id=scene_pick if scene_ids else None,
+            rgb_job_id=rgb_job_id,
         )
     finally:
         ro.close()
@@ -220,7 +272,7 @@ def render(conn) -> None:
             height=90,
             help="例如：当前批次待复核资料有哪些？",
         )
-        submitted = st.form_submit_button("提问", type="primary")
+        submitted = st.form_submit_button("提问", type="primary", key=f"{_NS}_submit")
 
     if submitted:
         _set_state(f"draft_{scope}", question.strip())
@@ -233,8 +285,16 @@ def render(conn) -> None:
         except Exception as exc:  # 留档失败不影响回答展示
             st.warning(f"回答已返回，但写入问答记录失败：{exc}")
             run_id = None
-        _set_state("result", {
+        answers = _state("answers") or {}
+        answers[ctx] = {
+            "facts_key": _facts_key(bundle),
             "run_id": run_id,
+            "ctx": ctx,
+            "scope": scope,
+            "rgb_job_id": rgb_job_id,
+            "scene_id": scene_pick if scene_ids else None,
+            "facts_sha": qa_store.facts_digest(bundle.text)[:16],
+            "generated_at": (bundle.snapshot or {}).get("generated_at"),
             "status": reply.status,
             "status_zh": reply.status_zh,
             "answer": reply.answer,
@@ -248,13 +308,25 @@ def render(conn) -> None:
             "completion_tokens": reply.usage.get("completion_tokens"),
             "total_tokens": reply.usage.get("total_tokens"),
             "provider_request_id": reply.provider_request_id,
-        })
+        }
+        _set_state("answers", answers)
 
     st.markdown("### 回答")
-    result = _state("result")
+    result = (_state("answers") or {}).get(ctx)
+    if result is not None and result.get("facts_key") != _facts_key(bundle):
+        result = None
+        st.info("此任务的事实或治理状态已变化，旧回答已隐藏；重新提问将使用当前事实。")
     if result is None:
-        st.info("输入问题后点击「提问」。只有点这个按钮才会发出请求。")
+        st.info("输入问题后点击「提问」。只有点这个按钮才会发出请求。"
+                "切换口径、场景或 RGB 任务后，需要重新提问；旧回答不会挂到新引用下。")
     else:
+        st.caption(
+            f"本回答绑定：口径 {qa_facts.SCOPES.get(result['scope'], result['scope'])}"
+            f" · RGB任务 {result['rgb_job_id'] or '—'}"
+            f" · 场景 {result['scene_id'] or '—'}"
+            f" · 当时事实摘要 SHA 前16位 {result['facts_sha']}…"
+            f" · 生成于 {result['generated_at'] or '未知'}"
+        )
         if result.get("run_id"):
             st.caption(f"本次问答已写入 qa_runs，run_id = {result['run_id']}")
         _render_answer(result)

@@ -1,7 +1,7 @@
 """T15 问答页面的 AppTest 验收（Streamlit AppTest，全程离线）。
 
 覆盖：
-- app.py 第 9 个标签页存在，页面能渲染不报错；
+- 按名称进入问答页，页面能渲染不报错；
 - 未配置密钥时显示准确状态，本地事实摘要照常可见，提交后显示「未配置」而不是假答案；
 - 配置就绪时（把 ask 换成桩）提交能拿到回答、写入 qa_runs 并显示引用来源。
 
@@ -63,6 +63,8 @@ class QaPageTest(unittest.TestCase):
     def _run(self) -> AppTest:
         at = AppTest.from_file(APP, default_timeout=120)
         at.run()
+        at.sidebar.radio[0].set_value("DeepSeek 问答")
+        at.run()
         return at
 
     def test_page_renders_without_key(self):
@@ -85,7 +87,7 @@ class QaPageTest(unittest.TestCase):
         os.environ.pop("DEEPSEEK_API_KEY", None)
         at = self._run()
         at.text_area[-1].set_value("当前批次待复核资料有哪些？")
-        at.button[-1].click()
+        at.button(key="qa_submit").click()
         at.run()
         self.assertFalse(at.exception, [str(e) for e in at.exception])
         blob = "\n".join(w.value for w in at.warning)
@@ -114,7 +116,7 @@ class QaPageTest(unittest.TestCase):
         with mock.patch.object(ds, "ask", return_value=canned):
             at = self._run()
             at.text_area[-1].set_value("当前批次待复核资料有哪些？")
-            at.button[-1].click()
+            at.button(key="qa_submit").click()
             at.run()
         self.assertFalse(at.exception, [str(e) for e in at.exception])
         success = "\n".join(s.value for s in at.success)

@@ -266,7 +266,8 @@ def verify_outputs(result_dir: Path, image_sha256: str, manifest_path: Path,
 class RgbCandidateJobs:
     """RGB候选识别作业：同步提交、专用库持久化、产物核摘要读取。"""
 
-    def __init__(self, project_root: Path = ROOT, data_dir: Path | str | None = None):
+    def __init__(self, project_root: Path = ROOT, data_dir: Path | str | None = None,
+                 *, readonly: bool = False):
         self.project_root = Path(project_root).resolve()
         if data_dir is None:
             env = os.environ.get("AGROLAKE_RGB_DIR")
@@ -274,10 +275,21 @@ class RgbCandidateJobs:
         self.data_dir = Path(data_dir).resolve()
         self.jobs_dir = self.data_dir / "jobs"
         self.db_path = self.data_dir / "runs.sqlite3"
+        self.readonly = bool(readonly)
 
     # ---------- 存储基础 ----------
 
     def _connect(self) -> sqlite3.Connection:
+        if self.readonly:
+            # 只读访问（INT-20261021-001）：mode=ro + query_only，不建目录、不建库、
+            # 不执行任何 DDL；库不存在时明确报错，绝不悄悄新建。
+            if not self.db_path.is_file():
+                raise RgbArtifactError("RGB作业库不存在，只读模式不会创建新库。")
+            uri = self.db_path.resolve().as_uri() + "?mode=ro"
+            conn = sqlite3.connect(uri, uri=True, timeout=30)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA query_only = ON")
+            return conn
         self.data_dir.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(self.db_path, timeout=30)
         conn.row_factory = sqlite3.Row
@@ -335,6 +347,9 @@ class RgbCandidateJobs:
 
     def submit(self, content: bytes, filename: str, request_id: str) -> dict:
         """同步提交一次识别：校验输入→持久化→运行CLI→核验产物→落库。"""
+        if self.readonly:
+            raise RgbCandidateInputError(
+                "只读模式不允许提交识别；如需运行识别请使用默认（可写）连接。")
         rid = request_id if isinstance(request_id, str) else ""
         if not REQUEST_ID_RE.match(rid):
             raise RgbCandidateInputError(

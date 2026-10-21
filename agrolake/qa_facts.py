@@ -28,6 +28,7 @@ SCOPES: dict[str, str] = {
     "batch_review": "当前批次待复核资料",
     "scene": "场景质量与识别结果",
     "governance_report": "治理报告",
+    "rgb_job": "RGB 识别任务事实",
 }
 
 _ABS_PATH = re.compile(r"[A-Za-z]:\\[^\s\"'）)，,；;]*")
@@ -256,9 +257,16 @@ def _scene_block(
     sc = next(s for s in all_scenes if s["scene_id"] == pick)
     by_id = {v["version_id"]: v for v in scenes.list_versions(conn)}
 
+    try:
+        rgb_jobs = [r["job_id"] for r in conn.execute(
+            "SELECT job_id FROM rgb_governance_links WHERE scene_id=? ORDER BY link_id", (pick,))
+            if re.fullmatch(r"[0-9a-f]{32}", str(r["job_id"]))]
+    except sqlite3.OperationalError:
+        rgb_jobs = []
     lines = [f"- 场景编号：{pick}"]
     roles = sc["roles"]
-    role_zh = {"image": "影像", "attribute": "属性", "text": "复核文本"}
+    role_zh = {"image": "影像", "attribute": "属性",
+               "text": "文本记录" if rgb_jobs else "复核文本"}
     for role, items_r in roles.items():
         if items_r:
             names = []
@@ -338,6 +346,11 @@ def _scene_block(
                      "无独立真值，不报告识别准确率；像素不能直接换算为实测平方米。")
         for c in rec["classes"][:8]:
             lines.append(f"  · 类别 {c['class_value']}（{c['meaning']}）：{c['pixels']} 像素")
+    elif rgb_jobs:
+        lines.append("- 存在RGB登记记录：" + "、".join(rgb_jobs)
+                     + "；请在“RGB 识别任务事实”选择任务，核验专用库与产物后查看像素统计。")
+        lines.append("- 本场景文本包含派生统计记录，不代表已有真人复核。")
+        gaps.append("本场景口径不读取RGB专用统计库；登记存在不等于产物核验通过。")
     else:
         lines.append(f"- 识别结果：暂无（{rec['note']}）")
         gaps.append("该场景尚无识别结果落库，无法解释识别结论")
@@ -374,14 +387,24 @@ def _scene_block(
         "attribute_rows": len(attr_rows),
         "recognition": rec,
     }
+    if rgb_jobs:
+        snapshot["rgb_job_ids"] = rgb_jobs
     return lines, snapshot, citations, gaps, f"场景 {pick} 质量与识别结果"
 
 
 def build(
-    conn: sqlite3.Connection, scope: str, *, scene_id: str | None = None
+    conn: sqlite3.Connection, scope: str, *, scene_id: str | None = None,
+    rgb_job_id: str | None = None, data_dir=None,
 ) -> FactBundle:
-    """组装事实摘要。``scope`` 取值见 :data:`SCOPES`。"""
+    """组装事实摘要。``scope`` 取值见 :data:`SCOPES`。
+
+    ``rgb_job`` 口径委托给 :mod:`agrolake.rgb_facts`（只读），旧四口径不变。
+    """
     scope = scope if scope in SCOPES else "overview"
+    if scope == "rgb_job":
+        from . import rgb_facts  # 延迟导入，避免循环依赖
+
+        return rgb_facts.build(conn, rgb_job_id, data_dir=data_dir)
     header = [
         f"【口径】统计时点 {_now()}；规则版本 {quality.rules_version()}；"
         f"语义字典 {semantics.semantic_version()}",
