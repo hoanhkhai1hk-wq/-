@@ -1,0 +1,194 @@
+{
+  "new_dev313": {
+    "ridge": [
+      {
+        "sample_id": "apr13_tile_r53_c22",
+        "image_path": "0413-r36c23/tile_r53_c22.tif",
+        "json_path": "0413-r36c23/tile_r53_c22.json",
+        "image_sha256": "632809bc32508ae94234b58f8e130fd5f7c0cdec963b368d7eef8b6d27dd5e64",
+        "json_sha256": "aa8cbd10153dcf30982b036cff1d2b9f6bb150c09637af47705ea81f54d6240d",
+        "class_pixels": {
+          "0": 258343,
+          "1": 3429,
+          "2": 0,
+          "255": 372
+        },
+        "ridge_equivalent_width_pixels": 18.04736842105263,
+        "road_equivalent_width_pixels": null
+      },
+      {
+        "sample_id": "apr13_tile_r54_c23",
+        "image_path": "0413-r36c23/tile_r54_c23.tif",
+        "json_path": "0413-r36c23/tile_r54_c23.json",
+        "image_sha256": "de71568cf939b9ff762cf40c58892f908823dd1687eeaed376cb5c752747734f",
+        "json_sha256": "e2c6845f5b8aa95e0b88467c43c15b76f10f8781e37d032d4e13b1c111a2dfb5",
+        "class_pixels": {
+          "0": 247847,
+          "1": 12657,
+          "2": 0,
+          "255": 1640
+        },
+        "ridge_equivalent_width_pixels": 23.13893967093236,
+        "road_equivalent_width_pixels": null
+      },
+      {
+        "sample_id": "apr13_tile_r48_c4",
+        "image_path": "0413-r36c23/tile_r48_c4.tif",
+        "json_path": "0413-r36c23/tile_r48_c4.json",
+        "image_sha256": "4457bf780e0d7bff02b0d0faa5aa0ce907235cdf4b82966fa2d46e6209d54e3e",
+        "json_sha256": "2384daea402bf698fae38d364b3d19ee9f24c45c73517d97a412b44d30e8f206",
+        "class_pixels": {
+          "0": 189793,
+          "1": 27192,
+          "2": 28390,
+          "255": 16769
+        },
+        "ridge_equivalent_width_pixels": 28.443514644351463,
+        "road_equivalent_width_pixels": 51.99633699633699
+      }
+    ],
+    "road": [
+      {
+        "sample_id": "apr13_tile_r51_c6",
+        "image_path": "0413-r36c23/tile_r51_c6.tif",
+        "json_path": "0413-r36c23/tile_r51_c6.json",
+        "image_sha256": "d75c9cb061420df3cee55d09d7a4a13adac554d1e4ec6205999208e5ac954c36",
+        "json_sha256": "34617c51c3229bb3a2f4b1ce64e833f30b169bb81622c1b7667d0781092931e7",
+        "class_pixels": {
+          "0": 161569,
+          "1": 28119,
+          "2": 44707,
+          "255": 27749
+        },
+        "ridge_equivalent_width_pixels": 21.49770642201835,
+        "road_equivalent_width_pixels": 57.02423469387755
+      },
+      {
+        "sample_id": "apr13_tile_r44_c25",
+        "image_path": "0413-r36c23/tile_r44_c25.tif",
+        "json_path": "0413-r36c23/tile_r44_c25.json",
+        "image_sha256": "3466f0095b07ecad3cb0b2cca92519f49fa82e73b3fa0e80c8500ae271b25313",
+        "json_sha256": "b204d676b8c1a5db1f12745b9e9a3204bd501dcc61d9c7e1c50620133ced01f4",
+        "class_pixels": {
+          "0": 168124,
+          "1": 10183,
+          "2": 51403,
+          "255": 32434
+        },
+        "ridge_equivalent_width_pixels": 11.214757709251101,
+        "road_equivalent_width_pixels": 67.63552631578948
+      },
+      {
+        "sample_id": "apr13_tile_r58_c11",
+        "image_path": "0413-r36c23/tile_r58_c11.tif",
+        "json_path": "0413-r36c23/tile_r58_c11.json",
+        "image_sha256": "cab0eb63e86ead3cf008362ccf7a355e2026429474d9aceb1ffb1a54882e7291",
+        "json_sha256": "c5f445fb67540e0d030a181d100404153be27e511ea645e5c839cb2aa5935b9c",
+        "class_pixels": {
+          "0": 83772,
+          "1": 46543,
+          "2": 91415,
+          "255": 40414
+        },
+        "ridge_equivalent_width_pixels": 25.8715953307393,
+        "road_equivalent_width_pixels": 76.1157368859284
+      }
+    ]
+  },
+  "old_dev734": {
+    "ridge": [
+      {
+        "sample_id": "b6bbec638401d310d9f6",
+        "image_path": "hy0713 (1)/tile_r54_c53.tif",
+        "json_path": "hy0713 (1)/tile_r54_c53.json",
+        "image_sha256": "6b89596b336009efabb098aaaeb5bf6b963003eb26ac594997d305dbd19e1765",
+        "json_sha256": "2557e2dcc532a5e380741d1a16d6808a90cf724cc671d6c8eea77696c44e36a6",
+        "class_pixels": {
+          "0": 249916,
+          "1": 11111,
+          "2": 0,
+          "255": 1117
+        },
+        "ridge_equivalent_width_pixels": 20.652416356877325,
+        "road_equivalent_width_pixels": null
+      },
+      {
+        "sample_id": "6e1572554c1dc9422fe7",
+        "image_path": "hy0713 (1)/tile_r64_c38.tif",
+        "json_path": "hy0713 (1)/tile_r64_c38.json",
+        "image_sha256": "2c08e13899b41e484049bb27498ffce7ddaea49445b2aae4fbcde7c2e8ba0bf3",
+        "json_sha256": "af7ff92324b5d807165d844d991e90822c8d6d848fb5f2749602fe63d7856e58",
+        "class_pixels": {
+          "0": 241122,
+          "1": 20127,
+          "2": 0,
+          "255": 895
+        },
+        "ridge_equivalent_width_pixels": 25.348866498740556,
+        "road_equivalent_width_pixels": null
+      },
+      {
+        "sample_id": "394421a38ea9aa948ca0",
+        "image_path": "hy0713 (1)/tile_r69_c36.tif",
+        "json_path": "hy0713 (1)/tile_r69_c36.json",
+        "image_sha256": "7f476f05ba4580cad79c78ca3582f900b081120e0b99e427a92926d60cda30c8",
+        "json_sha256": "9c12ffae43fe774c8a004c16f8cab596f246430acfe123cff9c278f2b29da9dc",
+        "class_pixels": {
+          "0": 236717,
+          "1": 24574,
+          "2": 0,
+          "255": 853
+        },
+        "ridge_equivalent_width_pixels": 31.667525773195877,
+        "road_equivalent_width_pixels": null
+      }
+    ],
+    "road": [
+      {
+        "sample_id": "b9b3c7f1c6d407ada8f0",
+        "image_path": "hy0713 (1)/tile_r70_c30.tif",
+        "json_path": "hy0713 (1)/tile_r70_c30.json",
+        "image_sha256": "19eda903afab5c5860449d7db3598285bfb1ad6fc15c2fe734e06e50480ed23d",
+        "json_sha256": "be43e580148bd0079a40ab27c1407afbd24fe4da56e06c2c6a350c08244246f9",
+        "class_pixels": {
+          "0": 175601,
+          "1": 44935,
+          "2": 24163,
+          "255": 17445
+        },
+        "ridge_equivalent_width_pixels": 25.30123873873874,
+        "road_equivalent_width_pixels": 52.18790496760259
+      },
+      {
+        "sample_id": "cda19d49d8908191cff2",
+        "image_path": "hy0713 (1)/tile_r61_c40.tif",
+        "json_path": "hy0713 (1)/tile_r61_c40.json",
+        "image_sha256": "b81ee6b3f16c421dc616c965dc02630f5c91aec5f7cb0e5c1c7c91dfb8bf3f01",
+        "json_sha256": "51e2cb59ac4b2b70d58119e81eb54860d5891c9f752bdf4d55fb9c56bf05603f",
+        "class_pixels": {
+          "0": 160811,
+          "1": 31382,
+          "2": 47812,
+          "255": 22139
+        },
+        "ridge_equivalent_width_pixels": 24.807905138339923,
+        "road_equivalent_width_pixels": 63.74933333333333
+      },
+      {
+        "sample_id": "0c303a2563336449b3e0",
+        "image_path": "hy0713 (1)/tile_r56_c43.tif",
+        "json_path": "hy0713 (1)/tile_r56_c43.json",
+        "image_sha256": "d3770668ea9dc91dd2fab379929ba9a5a008e27e8ee3200577a3ae5b6e6a2d70",
+        "json_sha256": "9c307ba44184d6783b3bc38351582c457a8149798dd3f064fefc813c86a42e48",
+        "class_pixels": {
+          "0": 162578,
+          "1": 26391,
+          "2": 71629,
+          "255": 1546
+        },
+        "ridge_equivalent_width_pixels": 18.59830866807611,
+        "road_equivalent_width_pixels": 74.3039419087137
+      }
+    ]
+  }
+}

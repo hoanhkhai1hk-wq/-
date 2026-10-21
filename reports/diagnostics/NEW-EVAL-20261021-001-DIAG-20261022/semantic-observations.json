@@ -1,0 +1,137 @@
+{
+  "cases": [
+    {
+      "group": "new_dev313",
+      "class": "ridge",
+      "image_path": "0413-r36c23/tile_r53_c22.tif",
+      "sample_id": "apr13_tile_r53_c22",
+      "width_proxy_pixels": 18.04736842105263,
+      "visual_observation": "土色田边角部",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "new_dev313",
+      "class": "ridge",
+      "image_path": "0413-r36c23/tile_r54_c23.tif",
+      "sample_id": "apr13_tile_r54_c23",
+      "width_proxy_pixels": 23.13893967093236,
+      "visual_observation": "裸土条带",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "new_dev313",
+      "class": "ridge",
+      "image_path": "0413-r36c23/tile_r48_c4.tif",
+      "sample_id": "apr13_tile_r48_c4",
+      "width_proxy_pixels": 28.443514644351463,
+      "visual_observation": "路旁土带，与浅色路面分开",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "new_dev313",
+      "class": "road",
+      "image_path": "0413-r36c23/tile_r51_c6.tif",
+      "sample_id": "apr13_tile_r51_c6",
+      "width_proxy_pixels": 57.02423469387755,
+      "visual_observation": "浅灰直路主体，路旁土带另标田埂",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "new_dev313",
+      "class": "road",
+      "image_path": "0413-r36c23/tile_r44_c25.tif",
+      "sample_id": "apr13_tile_r44_c25",
+      "width_proxy_pixels": 67.63552631578948,
+      "visual_observation": "浅色直路主体，路肩另标田埂",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "new_dev313",
+      "class": "road",
+      "image_path": "0413-r36c23/tile_r58_c11.tif",
+      "sample_id": "apr13_tile_r58_c11",
+      "width_proxy_pixels": 76.1157368859284,
+      "visual_observation": "浅灰交叉口主体",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "old_dev734",
+      "class": "ridge",
+      "image_path": "hy0713 (1)/tile_r54_c53.tif",
+      "sample_id": "b6bbec638401d310d9f6",
+      "width_proxy_pixels": 20.652416356877325,
+      "visual_observation": "绿植分界条带",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "old_dev734",
+      "class": "ridge",
+      "image_path": "hy0713 (1)/tile_r64_c38.tif",
+      "sample_id": "6e1572554c1dc9422fe7",
+      "width_proxy_pixels": 25.348866498740556,
+      "visual_observation": "绿植分界条带",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "old_dev734",
+      "class": "ridge",
+      "image_path": "hy0713 (1)/tile_r69_c36.tif",
+      "sample_id": "394421a38ea9aa948ca0",
+      "width_proxy_pixels": 31.667525773195877,
+      "visual_observation": "较宽绿植分界条带",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "old_dev734",
+      "class": "road",
+      "image_path": "hy0713 (1)/tile_r70_c30.tif",
+      "sample_id": "b9b3c7f1c6d407ada8f0",
+      "width_proxy_pixels": 52.18790496760259,
+      "visual_observation": "浅色直路边角，绿色路肩另标田埂",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "old_dev734",
+      "class": "road",
+      "image_path": "hy0713 (1)/tile_r61_c40.tif",
+      "sample_id": "cda19d49d8908191cff2",
+      "width_proxy_pixels": 63.74933333333333,
+      "visual_observation": "浅色直路主体，绿色路肩另标田埂",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    },
+    {
+      "group": "old_dev734",
+      "class": "road",
+      "image_path": "hy0713 (1)/tile_r56_c43.tif",
+      "sample_id": "0c303a2563336449b3e0",
+      "width_proxy_pixels": 74.3039419087137,
+      "visual_observation": "浅色弯路主体，绿色路肩另标田埂",
+      "meaning": "Codex目视观察的外观与标签位置关系；非实地语义确认，非农学真实宽度",
+      "selected_by": "development-only q25/q50/q75 per-image label-width proxy, before semantic interpretation",
+      "frozen": false
+    }
+  ],
+  "conclusion": "样例像素宽度重叠；新土色田边、旧绿植分界的表观差异明显，不能证明土路归类与所有语义已一致；不改标签"
+}

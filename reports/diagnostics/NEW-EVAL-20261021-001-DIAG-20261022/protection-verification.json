@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "existing_files_metadata_verified": 60215,
+  "protected_hashes_verified": 5032,
+  "weights_sha256_verified": 1213,
+  "governance_sha256": "5762d77da626671e8be0e0b49ec1a9dae7e062ff00e94ddbd5a7ee377035fba3",
+  "frozen_originals_not_opened": 48,
+  "changed_existing": [],
+  "missing_existing": [],
+  "changed_protected_hash": [],
+  "new_outside_authorized_dirs": [],
+  "new_inside_authorized_dirs": 290,
+  "new_forwards": 0,
+  "new_training_steps": 0,
+  "model_and_data_changed": false
+}

@@ -1,0 +1,9 @@
+test_horizontal_interface_obeys_same_rule (__main__.BoundaryMarginTests.test_horizontal_interface_obeys_same_rule) ... ok
+test_known_interface_two_sided_exact_layers (__main__.BoundaryMarginTests.test_known_interface_two_sided_exact_layers) ... ok
+test_no_frame_and_no_all_unknown_boundary (__main__.BoundaryMarginTests.test_no_frame_and_no_all_unknown_boundary) ... ok
+test_unknown_margin_has_two_known_layers_only (__main__.BoundaryMarginTests.test_unknown_margin_has_two_known_layers_only) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.064s
+
+OK

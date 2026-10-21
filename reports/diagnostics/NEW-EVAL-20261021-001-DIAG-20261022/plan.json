@@ -1,0 +1,16 @@
+{
+  "task": "NEW-EVAL-20261021-001-DIAG-20261022",
+  "authorization": "用户允许只读冻结24张已有派生标签掩膜，仅用于边界统计；不得读取冻结原图或原标注",
+  "source_groups": {
+    "frozen": 24,
+    "new_candidate": 337,
+    "development_excluding_frozen": 313,
+    "legacy_development_disposition": "experiment_train734"
+  },
+  "boundary_rule": "two-sided nearest unequal-known-label interface; pixel-center Chebyshev radius2, no image-frame boundary and no255 boundary; count band-associated errors as estimate, not causal proof",
+  "disjoint_count_rule": "c(all mismatches within2px label band) first; then a(Field->ridge outside band), b(Field->Road outside band), d(remaining errors outside band); raw a/b totals also reported",
+  "bare_soil_rule": "No bare-soil ground truth exists; frozen Field errors cannot be uniquely labeled bare-soil; development-only visual examples support interpretation, no spectral/color threshold on frozen images",
+  "width_rule": "class binary mask equivalent width=2*pixel area/four-neighbor perimeter, native pixel units; includes image clipping, not measured real width",
+  "road_rule": "saved final Road pixels iff frozen-code W5 argmax==2; infer support activations without re-forwarding or claiming saved W5 probabilities",
+  "recommendation_basis": "development-only label/geometry review; frozen counts only descriptive, no tuning/calibration/label edit"
+}

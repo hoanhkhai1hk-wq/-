@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "total_tests": 65,
+  "results": [
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/labels",
+        "-p",
+        "test_candidate.py"
+      ],
+      "exit_code": 0,
+      "tests": 41,
+      "log": "tests-1.log"
+    },
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/labels",
+        "-p",
+        "test_new_source_scope.py"
+      ],
+      "exit_code": 0,
+      "tests": 5,
+      "log": "tests-2.log"
+    },
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/recognition",
+        "-p",
+        "test_frozen_evaluation.py"
+      ],
+      "exit_code": 0,
+      "tests": 8,
+      "log": "tests-3.log"
+    },
+    {
+      "args": [
+        "D:\\AI_Workspace\\Tasks\\兴智杯\\reports\\diagnostics\\NEW-EVAL-20261021-001-DIAG-20261022\\test_diagnose.py"
+      ],
+      "exit_code": 0,
+      "tests": 7,
+      "log": "tests-4.log"
+    },
+    {
+      "args": [
+        "D:\\AI_Workspace\\Tasks\\兴智杯\\reports\\diagnostics\\NEW-EVAL-20261021-001-DIAG-20261022\\test_boundary_semantics.py"
+      ],
+      "exit_code": 0,
+      "tests": 4,
+      "log": "tests-5.log"
+    }
+  ],
+  "temporary_writes_confined_to_reports": "reports\\diagnostics\\NEW-EVAL-20261021-001-DIAG-20261022\\new-test-fixtures"
+}
