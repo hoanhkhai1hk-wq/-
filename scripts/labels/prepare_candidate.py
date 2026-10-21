@@ -21,7 +21,9 @@
 
 - 默认输入 `<根>/reports/labels/DATA-20261016-004-input.json`（005 修复沿用 004 索引）。
 - 自定义输入必须位于 `<根>/reports/labels` 内；其引用的原始文件必须落在
-  `<根>/邓`、`<根>/hy0713 (1)` 或 `<根>/reports/labels`（fixture）内。
+  `<根>/0413-r36c23`（DATA-20261021-001 新增，548 对，345 非空 / 203 空，
+  4 个 rectangle 所属图片仍按 unsupported 整份排除）、`<根>/邓`、
+  `<根>/hy0713 (1)` 或 `<根>/reports/labels`（fixture）内。
 - 输出只能写到 `<根>/reports/labels` 内一个**全新**目录；已存在即拒绝，不覆盖/不删除。
 
 类别：0=Field 田块，1=Field ridge 田埂，2=Road 道路，255=忽略/未画/冲突/未确认。
@@ -71,7 +73,7 @@ CLASS_NAMES = {
     "255": "ignore 忽略/未画/冲突/未确认",
 }
 
-ALLOWED_SOURCE_DIRS = ("邓", "hy0713 (1)")
+ALLOWED_SOURCE_DIRS = ("0413-r36c23", "邓", "hy0713 (1)")
 REQUIRED_FIELDS = (
     "sample_id", "dataset", "json_path", "json_sha256", "json_bytes",
     "image_path", "image_sha256", "image_bytes", "width", "height",
@@ -194,7 +196,7 @@ def _resolve_source(rel, root, ctx):
     allowed = [os.path.realpath(os.path.join(root, d)) for d in ALLOWED_SOURCE_DIRS]
     allowed.append(os.path.realpath(_labels_dir(root)))
     if not any(_within(real, a) for a in allowed):
-        raise PrepareError("%s：路径越界（仅允许 邓、hy0713 (1) 或 reports/labels 内）：%r"
+        raise PrepareError("%s：路径越界（仅允许 0413-r36c23、邓、hy0713 (1) 或 reports/labels 内）：%r"
                            % (ctx, rel))
     if not os.path.isfile(real):
         raise PrepareError("%s：原始文件不存在：%s" % (ctx, real))
