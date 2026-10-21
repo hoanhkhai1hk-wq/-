@@ -1,0 +1,82 @@
+{
+  "review_method": "Codex逐页实际查看Word原生PDF的12张PNG，不以抽样代替全页检查",
+  "all_pages_reviewed": true,
+  "pages": [
+    {
+      "page": 1,
+      "png": "pages-v11/page-01.png",
+      "sha256": "e6fecbeeaf8703dc18cf96462746705a78511a8e58ea996e67c259bf7a2f2b1a",
+      "finding": "封面占位和原规格保留，无溢出。"
+    },
+    {
+      "page": 2,
+      "png": "pages-v11/page-02.png",
+      "sha256": "f0d798e4d1d5f832a8ba9539fc0988417d69f064fca7132bc518096e1965bd1d",
+      "finding": "填写说明可读，无乱码。"
+    },
+    {
+      "page": 3,
+      "png": "pages-v11/page-03.png",
+      "sha256": "80744d8e24e0ae04da75f76aed7e02f4cef85dda1b5f9ebd0195635926876f7f",
+      "finding": "基础信息与联系方式占位保留，表格正常。"
+    },
+    {
+      "page": 4,
+      "png": "pages-v11/page-04.png",
+      "sha256": "db53ece5313341b82e3823f8512c3d8e76cc4f0590cb9bde8b8013e65f17403f",
+      "finding": "正文仿宋_GB2312可读，段落正常接续。"
+    },
+    {
+      "page": 5,
+      "png": "pages-v11/page-05.png",
+      "sha256": "7af6de4b3c0a3ed6137d612c1f28b620920044953ec12edd608e730f3bd8506e",
+      "finding": "原模型/训练来源数字未改，页码正常。"
+    },
+    {
+      "page": 6,
+      "png": "pages-v11/page-06.png",
+      "sha256": "90a8f64ad28ce413d07338e8483253e00d7aa33de600b0e3da99ebf5097e5535",
+      "finding": "新增548/337/203/8和24/32.4/76.7/7.5/13.0、69登记与证据边界完整，未越出页面。"
+    },
+    {
+      "page": 7,
+      "png": "pages-v11/page-07.png",
+      "sha256": "94425b66cab699b1ccbc803cb48c38c2ff60b6d124609f0530dc3aa8b4d7c991",
+      "finding": "社会效益因新增正文自然顺延，保留原段落和分页属性，非空白页。"
+    },
+    {
+      "page": 8,
+      "png": "pages-v11/page-08.png",
+      "sha256": "c435e87cb122cba899fb87fb6dfe1b0c302170e29cf5cabf08828f9e3fd1a333",
+      "finding": "附录C两项完成删除线清楚，其余待核保留；FTW1/0/0及新增摘要行完整可见。"
+    },
+    {
+      "page": 9,
+      "png": "pages-v11/page-09.png",
+      "sha256": "3058d19ef5041863c0b194763f1c419ddac3cf6e18fecea78b2caa2dbed51002",
+      "finding": "参考文献与第一张界面及722说明完整。"
+    },
+    {
+      "page": 10,
+      "png": "pages-v11/page-10.png",
+      "sha256": "7c1b33d2b45bb5d6ddd796f9f63890b7cf0bc906f9af61b3fe204bc74c8b942c",
+      "finding": "第二张图及图注完整，页码10未截断。"
+    },
+    {
+      "page": 11,
+      "png": "pages-v11/page-11.png",
+      "sha256": "f53e500168869526b98a282d57327aa676a57eda07258d7bf1a5584075060397",
+      "finding": "第三张图及图注完整，页码11未截断。"
+    },
+    {
+      "page": 12,
+      "png": "pages-v11/page-12.png",
+      "sha256": "81418f590ae4a62196160a84aa86af6d5229c4d3ed561c45cd91da061f141160",
+      "finding": "第四张图及图注完整，页码12未截断。"
+    }
+  ],
+  "no_garbled_text": true,
+  "no_page_overflow": true,
+  "no_cut_off_page_numbers": true,
+  "no_blank_pages": true
+}

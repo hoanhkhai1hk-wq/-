@@ -1,0 +1,14 @@
+[
+  {
+    "op": "validate",
+    "exit_code": 0,
+    "stdout": "{\"engine\":\"zagens-office-cli\",\"ok\":true,\"op\":\"validate\",\"result\":{\"metadata\":{\"engine\":\"zagens-office-edit\",\"issue_count\":0,\"issues\":[],\"ok\":true,\"op\":\"validate\"},\"summary\":\"validate 通过：未发现错误\"}}\n",
+    "stderr": ""
+  },
+  {
+    "op": "preflight",
+    "exit_code": 101,
+    "stdout": "",
+    "stderr": "\nthread 'main' (28420) panicked at crates\\office-edit\\src\\annotated.rs:226:20:\nend byte index 322 is not a char boundary; it is inside '仿' (bytes 321..324 of string)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+]

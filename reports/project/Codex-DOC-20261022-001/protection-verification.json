@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "metadata_files_checked": 60508,
+  "protected_sha_files_checked": 4459,
+  "unexpected_changed_existing": [],
+  "missing_existing": [],
+  "sha_changed": [],
+  "allowed_existing_change": [
+    "SHARED_MEMORY.md"
+  ],
+  "existing_code_unchanged": true,
+  "original_labels_images_unchanged": true,
+  "governance_database_unchanged": true,
+  "model_weights_unchanged": true,
+  "v10_all_files_unchanged": true,
+  "baseline_git_status_preserved": true,
+  "new_model_training": 0,
+  "new_model_inference": 0,
+  "pushes_this_task": 0
+}

@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "only_paragraph_text_replacements": [
+    57,
+    63
+  ],
+  "original_paragraph_count": 80,
+  "new_table_rows": 1,
+  "all_original_summary_rows_unchanged": 8,
+  "font_paragraphs": 34,
+  "official_body_paragraphs_exact_font": 20,
+  "appendix_struck_items": [
+    "新影像整理与固定24张冻结初测",
+    "误分诊断、《RGB 标签验收规范》V1 与69条疑义待审登记"
+  ],
+  "all_other_document_structure_unchanged": true,
+  "other_package_parts_semantically_changed": [],
+  "existing_numbers_outside_authorized_text_unchanged": true,
+  "cover_basic_info_video_placeholders_unchanged": true,
+  "references_and_images_unchanged": true,
+  "v10_source_sha_unchanged": true,
+  "checker_normalization": "Ignore font properties and resulting empty run-property containers only at the 34 authorized font paragraphs."
+}

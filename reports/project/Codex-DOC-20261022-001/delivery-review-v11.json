@@ -1,0 +1,59 @@
+{
+  "task": "DOC-20261022-001",
+  "revision": "V11",
+  "scope": "仅四处定稿文字与字体修订，仍为未正式提交的审核稿",
+  "source_revision": "V10",
+  "structural_check": "passed",
+  "native_validate_issue_count": 0,
+  "native_preflight_exit_code": 101,
+  "native_preflight_passed": false,
+  "native_preflight_limitation": "zagens-office0.11.1中文UTF-8边界异常，未冒称通过；已以整包XML限定差异对照、Word原生导出、PDF文字/字体/页面边界检查与12页逐页审看验收。",
+  "native_word_version": "16.0",
+  "pages_before": 11,
+  "pages_after": 12,
+  "page_size": "A4",
+  "font_exact_family": "仿宋_GB2312",
+  "font_embedded_pdf": "FangSong_GB2312",
+  "font_paragraphs": 34,
+  "official_body_paragraphs": 20,
+  "newly_struck_completed_items": 2,
+  "independent_evaluation_only_partially_addressed": true,
+  "labels_not_revised": true,
+  "visual_pages_reviewed": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "visual_findings": "12页均无乱码、文字溢出、图片截断、空白页或页码截断；第7页社会效益因新增应用文字自然顺延，保留原有章节及分页属性；新增摘要行在第8页完整显示；第8页两项完成文字删除线清楚。",
+  "cover_basic_info_video_placeholders_preserved": true,
+  "old_summary_rows_preserved": true,
+  "body_and_appendix_texts_unchanged_except_authorized": true,
+  "new_training": 0,
+  "new_inference": 0,
+  "new_online_QA": 0,
+  "workbuddy_new_sessions": 0,
+  "files": {
+    "农智数湖-参赛方案审核稿.docx": {
+      "sha256": "1b3b74caabc5831d80255b29fc5d82f35b6950cc64f269a6970025ea16c88f03",
+      "bytes": 2004849
+    },
+    "农智数湖-参赛方案审核稿.pdf": {
+      "sha256": "29316cfda44bc76a77aa9cfbc52eef49fce443bccbe17e8bb16324774e5ccddd",
+      "bytes": 1392094
+    },
+    "改动清单.md": {
+      "sha256": "dfcb58cd09c12c1fba8fed4da861f39aea6d86da3d332b4c45821363d7ab944b",
+      "bytes": 4870
+    }
+  },
+  "four_change_list_items_verified": true
+}

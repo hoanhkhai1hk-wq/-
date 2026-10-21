@@ -1,0 +1,598 @@
+{
+  "atomic": true,
+  "ops": [
+    {
+      "op": "set_text",
+      "target": "/body/p[57]",
+      "text": "相关 94 项软件测试通过，验证治理、完整性、只读查询和页面行为；它们不等于农田分割准确率。2026-10-21 晚新接入的 548 张真实影像已完成整理（337 张候选、203 张空标注、8 张几何/格式退出），并完成固定 24 张冻结初测，三类平均交并比 32.4%（田块 76.7%、田埂 7.5%、道路 13.0%）。误分明显，已完成误分诊断，并建立《RGB 标签验收规范》V1 与 69 条疑义待审登记；疑义只登记，不自动改判。本批不包装成正式独立测试集，来源地块关系与标注语义未经证明。真实农业属性、业务试点、全新机器安装与正式在线问答复验仍待完成。本轮未新增训练或 DeepSeek 请求。"
+    },
+    {
+      "op": "raw_set",
+      "part": "/word/document.xml",
+      "xpath": "/w:document/w:body/w:p[63]",
+      "action": "replace",
+      "xml": "<w:p xmlns:ns1=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" ns1:paraId=\"55CFA2F3\" ns1:textId=\"77777777\" w:rsidR=\"001E7AC8\" w:rsidRDefault=\"00A3112B\"><w:pPr><w:jc w:val=\"both\" /><w:ind w:firstLine=\"420\" /><w:spacing w:after=\"80\" w:before=\"80\" w:line=\"320\" /><w:pStyle w:val=\"a5\" /></w:pPr><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:hint=\"eastAsia\" w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /></w:rPr><w:t>附录C：提交前待核。已完成：</w:t></w:r><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:hint=\"eastAsia\" w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /><w:strike /></w:rPr><w:t>新影像整理与固定24张冻结初测</w:t></w:r><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:hint=\"eastAsia\" w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /></w:rPr><w:t>；</w:t></w:r><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:hint=\"eastAsia\" w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /><w:strike /></w:rPr><w:t>误分诊断、《RGB 标签验收规范》V1 与69条疑义待审登记</w:t></w:r><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:hint=\"eastAsia\" w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /></w:rPr><w:t>。原“来源独立完整标注评估”由冻结初测部分回应，仍待来源独立及完整标注证据，来源地块关系与标注语义未经证明。团队和队长信息、农业资料及授权、新机安装、正式在线问答、视频独立访问和最终字体检查尚未全部完成。本稿不能直接作为最终提交文件。</w:t></w:r></w:p>"
+    },
+    {
+      "op": "raw_set",
+      "part": "/word/document.xml",
+      "xpath": "/w:document/w:body/w:tbl[4]",
+      "action": "append",
+      "xml": "<w:tr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:tc><w:p><w:pPr><w:jc w:val=\"left\" /><w:ind w:firstLine=\"0\" /><w:spacing w:after=\"40\" w:before=\"40\" w:line=\"260\" /></w:pPr><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /></w:rPr><w:t>新影像冻结初测</w:t></w:r></w:p></w:tc><w:tc><w:p><w:pPr><w:jc w:val=\"left\" /><w:ind w:firstLine=\"0\" /><w:spacing w:after=\"40\" w:before=\"40\" w:line=\"260\" /></w:pPr><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /></w:rPr><w:t>24 张，三类平均交并比 32.4%</w:t></w:r></w:p></w:tc><w:tc><w:p><w:pPr><w:jc w:val=\"left\" /><w:ind w:firstLine=\"0\" /><w:spacing w:after=\"40\" w:before=\"40\" w:line=\"260\" /></w:pPr><w:r><w:rPr><w:color w:val=\"000000\" /><w:sz w:val=\"21\" /><w:rFonts w:ascii=\"仿宋\" w:eastAsia=\"仿宋\" w:hAnsi=\"仿宋\" /></w:rPr><w:t>固定选图与模型清单的现有标注一致性初测，非独立农业精度</w:t></w:r></w:p></w:tc></w:tr>"
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[31]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[32]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[34]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[34]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[34]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[35]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[36]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[38]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[38]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[38]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[39]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[40]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[41]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[42]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[4]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[5]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[6]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[44]/r[7]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[45]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[49]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[49]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[49]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[50]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[4]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[5]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[6]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[7]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[8]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[9]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[10]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[11]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[12]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[13]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[14]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[15]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[16]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[17]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[52]/r[18]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[53]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[4]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[5]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[6]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[7]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[8]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[9]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[10]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[11]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[12]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[55]/r[13]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[56]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[57]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[59]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[61]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[61]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[61]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[62]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[62]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[63]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[63]/r[2]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[63]/r[3]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[63]/r[4]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[63]/r[5]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[66]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[67]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[68]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[69]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[70]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[71]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[72]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[73]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[75]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[77]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    },
+    {
+      "op": "set_props",
+      "target": "/body/p[79]/r[1]",
+      "props": {
+        "font": "仿宋_GB2312"
+      }
+    }
+  ]
+}
