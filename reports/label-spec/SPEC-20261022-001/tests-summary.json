@@ -1,0 +1,70 @@
+{
+  "passed": true,
+  "regression_tests": 65,
+  "new_acceptance_tests": 10,
+  "new_acceptance_evidence": "test_acceptance.py already ran once,10 passed in tool output; no redundant rerun",
+  "total": 75,
+  "results": [
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/labels",
+        "-p",
+        "test_candidate.py"
+      ],
+      "tests": 41,
+      "exit_code": 0,
+      "log": "regression-1.log"
+    },
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/labels",
+        "-p",
+        "test_new_source_scope.py"
+      ],
+      "tests": 5,
+      "exit_code": 0,
+      "log": "regression-2.log"
+    },
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/recognition",
+        "-p",
+        "test_frozen_evaluation.py"
+      ],
+      "tests": 8,
+      "exit_code": 0,
+      "log": "regression-3.log"
+    },
+    {
+      "args": [
+        "D:\\AI_Workspace\\Tasks\\兴智杯\\reports\\diagnostics\\NEW-EVAL-20261021-001-DIAG-20261022\\test_diagnose.py"
+      ],
+      "tests": 7,
+      "exit_code": 0,
+      "log": "regression-4.log"
+    },
+    {
+      "args": [
+        "D:\\AI_Workspace\\Tasks\\兴智杯\\reports\\diagnostics\\NEW-EVAL-20261021-001-DIAG-20261022\\test_boundary_semantics.py"
+      ],
+      "tests": 4,
+      "exit_code": 0,
+      "log": "regression-5.log"
+    }
+  ],
+  "new_inference": 0,
+  "new_training": 0,
+  "frozen_example_count": 0
+}

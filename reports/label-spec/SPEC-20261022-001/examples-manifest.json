@@ -1,0 +1,376 @@
+{
+  "version": "RGB-LABEL-V1",
+  "examples": [
+    {
+      "id": "C1-P1",
+      "case": "C1",
+      "scenario": "田面内非条带裸土",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r53_c18",
+      "image_path": "0413-r36c23/tile_r53_c18.tif",
+      "image_sha256": "d1588ad8d6d4837ce3e8ef7099237e2721937b9827b5668415edf1965a3b2244",
+      "existing_json_path": "0413-r36c23/tile_r53_c18.json",
+      "existing_json_sha256": "ec45fed5f62907548cfd58fa88c19f2c5766e8852e3e2e678c70d2b9de0b7935",
+      "roi_xyxy": [
+        80,
+        80,
+        430,
+        430
+      ],
+      "suggested_v1_meaning": "田块0",
+      "description": "裸土位于连续田面内部，未形成独立田界条带",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C1-examples.jpg"
+    },
+    {
+      "id": "C1-P2",
+      "case": "C1",
+      "scenario": "田面内非条带裸土",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r54_c20",
+      "image_path": "0413-r36c23/tile_r54_c20.tif",
+      "image_sha256": "7a5da07cd51dbe68e2732d269ee5c9419d7181f6760909925024ee3b1dd5d84d",
+      "existing_json_path": "0413-r36c23/tile_r54_c20.json",
+      "existing_json_sha256": "49c2a066e6200cfd85d51f85ec00b04051553f3ff128d11dc968a294e1a5cd43",
+      "roi_xyxy": [
+        80,
+        80,
+        430,
+        430
+      ],
+      "suggested_v1_meaning": "田块0",
+      "description": "田面内部裸土与耕作纹理，不因土色改变类别",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C1-examples.jpg"
+    },
+    {
+      "id": "C1-E1",
+      "case": "C1",
+      "scenario": "田面内非条带裸土",
+      "role": "confusable",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r52_c29",
+      "image_path": "0413-r36c23/tile_r52_c29.tif",
+      "image_sha256": "9497db96af1b98d0b74bd40a06e5ba203cbc226b08767b9fb6b008c6e587e7c3",
+      "existing_json_path": "0413-r36c23/tile_r52_c29.json",
+      "existing_json_sha256": "876cd5258ade00be7ecfb61be11195d184dc15cbf05b8fdde5ea59f242992444",
+      "roi_xyxy": [
+        120,
+        60,
+        500,
+        470
+      ],
+      "suggested_v1_meaning": "待审，不能自动判路",
+      "description": "路口旁车辙可能是田内转向，不证明是固定土路",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C1-examples.jpg"
+    },
+    {
+      "id": "C2-P1",
+      "case": "C2",
+      "scenario": "沿田界窄土条带",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r50_c16",
+      "image_path": "0413-r36c23/tile_r50_c16.tif",
+      "image_sha256": "9dd285d647d20e55d77cc042dd19496ac46c8dc60eb7d76fa6ce1a073d73de86",
+      "existing_json_path": "0413-r36c23/tile_r50_c16.json",
+      "existing_json_sha256": "a2167e64935f9a0a52af02054fed416f4adf698750c003e1388cac602024fd47",
+      "roi_xyxy": [
+        90,
+        60,
+        420,
+        460
+      ],
+      "suggested_v1_meaning": "田埂1",
+      "description": "沿田面之间连续窄带，关注土带而非两侧田面",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C2-examples.jpg"
+    },
+    {
+      "id": "C2-P2",
+      "case": "C2",
+      "scenario": "沿田界窄土条带",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r54_c23",
+      "image_path": "0413-r36c23/tile_r54_c23.tif",
+      "image_sha256": "de71568cf939b9ff762cf40c58892f908823dd1687eeaed376cb5c752747734f",
+      "existing_json_path": "0413-r36c23/tile_r54_c23.json",
+      "existing_json_sha256": "e2c6845f5b8aa95e0b88467c43c15b76f10f8781e37d032d4e13b1c111a2dfb5",
+      "roi_xyxy": [
+        45,
+        35,
+        470,
+        290
+      ],
+      "suggested_v1_meaning": "田埂1",
+      "description": "两侧田面之间的土色窄分界，不能泛化为全部土色",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C2-examples.jpg"
+    },
+    {
+      "id": "C2-E1",
+      "case": "C2",
+      "scenario": "沿田界窄土条带",
+      "role": "confusable",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r42_c38",
+      "image_path": "0413-r36c23/tile_r42_c38.tif",
+      "image_sha256": "060e6a9d9d4d58748a28affe5966c731ee8c091d14b263db9eeb7611fb4933fc",
+      "existing_json_path": "0413-r36c23/tile_r42_c38.json",
+      "existing_json_sha256": "1f0173e527fe267e03c9c8e67d83dcaa4889e42485962248864763540ed1450e",
+      "roi_xyxy": [
+        25,
+        50,
+        490,
+        490
+      ],
+      "suggested_v1_meaning": "待审",
+      "description": "不规则加宽绿土斑块，田界/作业区作用需核验",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C2-examples.jpg"
+    },
+    {
+      "id": "C3-P1",
+      "case": "C3",
+      "scenario": "绿植分界",
+      "role": "positive",
+      "source_scope": "old_dev734",
+      "sample_id": "6e1572554c1dc9422fe7",
+      "image_path": "hy0713 (1)/tile_r64_c38.tif",
+      "image_sha256": "2c08e13899b41e484049bb27498ffce7ddaea49445b2aae4fbcde7c2e8ba0bf3",
+      "existing_json_path": "hy0713 (1)/tile_r64_c38.json",
+      "existing_json_sha256": "af7ff92324b5d807165d844d991e90822c8d6d848fb5f2749602fe63d7856e58",
+      "roi_xyxy": [
+        65,
+        45,
+        460,
+        470
+      ],
+      "suggested_v1_meaning": "田埂1",
+      "description": "绿植窄带分隔两侧田面，依据作用而非深绿颜色",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C3-examples.jpg"
+    },
+    {
+      "id": "C3-P2",
+      "case": "C3",
+      "scenario": "绿植分界",
+      "role": "positive",
+      "source_scope": "old_dev734",
+      "sample_id": "394421a38ea9aa948ca0",
+      "image_path": "hy0713 (1)/tile_r69_c36.tif",
+      "image_sha256": "7f476f05ba4580cad79c78ca3582f900b081120e0b99e427a92926d60cda30c8",
+      "existing_json_path": "hy0713 (1)/tile_r69_c36.json",
+      "existing_json_sha256": "9c12ffae43fe774c8a004c16f8cab596f246430acfe123cff9c278f2b29da9dc",
+      "roi_xyxy": [
+        65,
+        45,
+        460,
+        470
+      ],
+      "suggested_v1_meaning": "田埂1",
+      "description": "长草分界仍是田埂，不将田内作物当田埂",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C3-examples.jpg"
+    },
+    {
+      "id": "C3-E1",
+      "case": "C3",
+      "scenario": "绿植分界",
+      "role": "confusable",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r43_c7",
+      "image_path": "0413-r36c23/tile_r43_c7.tif",
+      "image_sha256": "f4a6362573cf011ae5d36900c401b9c2745e3e05c774d4208738c755d9cedf8e",
+      "existing_json_path": "0413-r36c23/tile_r43_c7.json",
+      "existing_json_sha256": "702dd3e172af66d64a6b1e7ecee9f3d2c21b383e95f2524b0aa863ef2bbff825",
+      "roi_xyxy": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "suggested_v1_meaning": "待审",
+      "description": "道路绿化与靠田细带需分开，普通路旁绿带不自动入类",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C3-examples.jpg"
+    },
+    {
+      "id": "C4-P1",
+      "case": "C4",
+      "scenario": "土路/窄土带的相对宽度分支",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r50_c16",
+      "image_path": "0413-r36c23/tile_r50_c16.tif",
+      "image_sha256": "9dd285d647d20e55d77cc042dd19496ac46c8dc60eb7d76fa6ce1a073d73de86",
+      "existing_json_path": "0413-r36c23/tile_r50_c16.json",
+      "existing_json_sha256": "a2167e64935f9a0a52af02054fed416f4adf698750c003e1388cac602024fd47",
+      "roi_xyxy": [
+        90,
+        60,
+        420,
+        460
+      ],
+      "suggested_v1_meaning": "窄土带分支：田埂1",
+      "description": "仅示范窄土带分支，不证明能通行，不充当宽土路道路正例",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C4-examples.jpg"
+    },
+    {
+      "id": "C4-P2",
+      "case": "C4",
+      "scenario": "土路/窄土带的相对宽度分支",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r54_c23",
+      "image_path": "0413-r36c23/tile_r54_c23.tif",
+      "image_sha256": "de71568cf939b9ff762cf40c58892f908823dd1687eeaed376cb5c752747734f",
+      "existing_json_path": "0413-r36c23/tile_r54_c23.json",
+      "existing_json_sha256": "e2c6845f5b8aa95e0b88467c43c15b76f10f8781e37d032d4e13b1c111a2dfb5",
+      "roi_xyxy": [
+        45,
+        35,
+        470,
+        290
+      ],
+      "suggested_v1_meaning": "窄土带分支：田埂1",
+      "description": "仅示范田界窄土条带；宽土路分支仍缺可核通行证据",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C4-examples.jpg"
+    },
+    {
+      "id": "C4-E1",
+      "case": "C4",
+      "scenario": "土路/窄土带的相对宽度分支",
+      "role": "confusable",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r47_c32",
+      "image_path": "0413-r36c23/tile_r47_c32.tif",
+      "image_sha256": "fa89762a3fa75da4b954d6bed30edb7e2f2f18659e044957c62dde00a2e41903",
+      "existing_json_path": "0413-r36c23/tile_r47_c32.json",
+      "existing_json_sha256": "ee7f9fdb604443bff636701f6c72e6715148ce9b95a0616787d9ffa6ff7ed9ec",
+      "roi_xyxy": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "suggested_v1_meaning": "待审",
+      "description": "条带交汇处加宽，不能凭宽度或土色认定可通行道路",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C4-examples.jpg"
+    },
+    {
+      "id": "C5-P1",
+      "case": "C5",
+      "scenario": "硬质路面主体",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r46_c3",
+      "image_path": "0413-r36c23/tile_r46_c3.tif",
+      "image_sha256": "af9857c5c6af2ae3d9baafbe8b3a3e967c6c727ffe235ac1520c3936973f0f9e",
+      "existing_json_path": "0413-r36c23/tile_r46_c3.json",
+      "existing_json_sha256": "0a7a390db277d4449947217e3229e704f31059f2cd07d268eb0ff22c82bcedaf",
+      "roi_xyxy": [
+        40,
+        40,
+        470,
+        470
+      ],
+      "suggested_v1_meaning": "道路2",
+      "description": "有路面边界、标线及可见车辆的沥青通行主体",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C5-examples.jpg"
+    },
+    {
+      "id": "C5-P2",
+      "case": "C5",
+      "scenario": "硬质路面主体",
+      "role": "positive",
+      "source_scope": "new_dev313",
+      "sample_id": "apr13_tile_r58_c11",
+      "image_path": "0413-r36c23/tile_r58_c11.tif",
+      "image_sha256": "cab0eb63e86ead3cf008362ccf7a355e2026429474d9aceb1ffb1a54882e7291",
+      "existing_json_path": "0413-r36c23/tile_r58_c11.json",
+      "existing_json_sha256": "c5f445fb67540e0d030a181d100404153be27e511ea645e5c839cb2aa5935b9c",
+      "roi_xyxy": [
+        40,
+        40,
+        470,
+        470
+      ],
+      "suggested_v1_meaning": "道路2",
+      "description": "连续浅灰硬化交叉路面，与路肩/田边分开",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C5-examples.jpg"
+    },
+    {
+      "id": "C5-E1",
+      "case": "C5",
+      "scenario": "硬质路面主体",
+      "role": "confusable",
+      "source_scope": "old_dev734",
+      "sample_id": "4194dea59b73de41b35e",
+      "image_path": "hy0713 (1)/tile_r54_c46.tif",
+      "image_sha256": "f826d59777354be4ea5ddb9234381ddd95c68891b5eca552954f740893ea6173",
+      "existing_json_path": "hy0713 (1)/tile_r54_c46.json",
+      "existing_json_sha256": "9ea8293ba45d4ff76e91a5549b4fb3ec876dea796b2f207ca9f19505855be83a",
+      "roi_xyxy": [
+        180,
+        180,
+        500,
+        500
+      ],
+      "suggested_v1_meaning": "细边与路面主体分别看",
+      "description": "E03历史已确认水泥细边可为田埂，不能所有水泥都判道路",
+      "label_written": false,
+      "wide_passable_dirt_road_positive_claimed": false,
+      "gallery": "C5-examples.jpg"
+    }
+  ],
+  "frozen_images_used": 0,
+  "source_photos_unique": 13,
+  "case_counts": {
+    "C1": {
+      "positive": 2,
+      "confusable": 1
+    },
+    "C2": {
+      "positive": 2,
+      "confusable": 1
+    },
+    "C3": {
+      "positive": 2,
+      "confusable": 1
+    },
+    "C4": {
+      "positive": 2,
+      "confusable": 1
+    },
+    "C5": {
+      "positive": 2,
+      "confusable": 1
+    }
+  },
+  "coverage_gap": "C4 positives illustrate narrow-soil-strip branch only; no verified wide-passable-dirt-road Road positive; not fabricated",
+  "historical_labels_approved_by_gallery": false
+}

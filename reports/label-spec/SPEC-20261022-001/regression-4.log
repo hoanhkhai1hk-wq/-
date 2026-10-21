@@ -1,0 +1,12 @@
+test_exact_two_layers_on_both_sides (__main__.DiagnosisTests.test_exact_two_layers_on_both_sides) ... ok
+test_four_categories_are_disjoint_and_sum_to_errors (__main__.DiagnosisTests.test_four_categories_are_disjoint_and_sum_to_errors) ... ok
+test_invalid_classes_and_shape_rejected (__main__.DiagnosisTests.test_invalid_classes_and_shape_rejected) ... ok
+test_no_artificial_image_frame (__main__.DiagnosisTests.test_no_artificial_image_frame) ... ok
+test_pure_boundary_and_zero_error_differ (__main__.DiagnosisTests.test_pure_boundary_and_zero_error_differ) ... ok
+test_unknown_interfaces_not_class_boundaries (__main__.DiagnosisTests.test_unknown_interfaces_not_class_boundaries) ... ok
+test_width_proxy_is_hand_calculable (__main__.DiagnosisTests.test_width_proxy_is_hand_calculable) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.075s
+
+OK

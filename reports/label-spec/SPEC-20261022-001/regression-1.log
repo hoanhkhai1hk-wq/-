@@ -1,0 +1,15 @@
+...............................D:\AI_Workspace\Tasks\兴智杯\tests\labels\test_candidate.py:143: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  vals = set(m.getdata())
+.D:\AI_Workspace\Tasks\兴智杯\tests\labels\test_candidate.py:168: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  vals = set(m.getdata())
+.D:\AI_Workspace\Tasks\兴智杯\tests\labels\test_candidate.py:263: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  self.assertEqual(set(m.getdata()), {255})
+..D:\AI_Workspace\Tasks\兴智杯\tests\labels\test_candidate.py:211: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  self.assertTrue(set(m.getdata()).issubset({0, 255}))
+.D:\AI_Workspace\Tasks\兴智杯\tests\labels\test_candidate.py:192: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  data = list(m.getdata())
+.....
+----------------------------------------------------------------------
+Ran 41 tests in 1.203s
+
+OK

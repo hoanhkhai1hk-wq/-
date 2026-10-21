@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "existing_metadata_checked": 60508,
+  "allowed_changed_existing": [
+    "SHARED_MEMORY.md"
+  ],
+  "missing_existing": [],
+  "protected_sha_checked": 4453,
+  "protected_sha_changed": [],
+  "model_weights_checked": 1213,
+  "governance_database_sha_unchanged": true,
+  "original_labels_images_unchanged": true,
+  "original_frozen_images_stat_only": 48,
+  "new_inference": 0,
+  "new_training": 0,
+  "frozen_examples": 0,
+  "one_initial_push_only": true,
+  "user_approved_narrow_branch_examples": true
+}

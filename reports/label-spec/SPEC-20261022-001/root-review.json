@@ -1,0 +1,20 @@
+{
+  "task": "SPEC-20261022-001",
+  "actual_acp_session": "01a15f2d-4efb-71cf-96b6-4eabe62e52e9",
+  "stop_reason": "end_turn",
+  "memory_read": "R251",
+  "root_review": "WB初稿将五类场景误写为类别分组；Root按用户五类情形重写最终表，未采用沟渠/未知作为五类取例分组。语义细化保留历史E03/E04，未发现已证实实质冲突。",
+  "user_approved_example_coverage": "允许两个窄土带分支正例+一个宽条带待审易混例，明确宽土路道路分支缺可证实图；并非确认标签。",
+  "push_once_completed": {
+    "command": "git push origin dev/p0-governance",
+    "old": "a636496",
+    "new": "b6727d5",
+    "commits": 4
+  },
+  "tests": 75,
+  "ambiguities": 69,
+  "all_pending": true,
+  "existing_labels_changed": 0,
+  "new_forwards": 0,
+  "new_training": 0
+}
