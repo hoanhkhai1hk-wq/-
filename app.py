@@ -58,6 +58,46 @@ st.markdown(
       .ag-section-title {{ font-size: 1.35rem; font-weight: 700; margin: 2.2rem 0 0.9rem 0; }}
       div[data-testid="stMetricValue"] {{ color: {ACCENT}; }}
       section[data-testid="stSidebar"] {{ background: {SURFACE}; }}
+
+      /* Floating surfaces only; keep Streamlit's native navigation and collapse. */
+      section[data-testid="stSidebar"][aria-expanded="true"] {{
+        margin: 18px;
+        height: calc(100% - 36px) !important;
+        border-radius: 24px;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
+      }}
+      section[data-testid="stSidebar"][aria-expanded="true"]
+      [data-testid="stSidebarContent"] {{ border-radius: inherit; }}
+      .ag-flow {{ border-radius: 14px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03); }}
+
+      /* Stretch only the four KPI columns, including Streamlit's HTML wrappers. */
+      [data-testid="stHorizontalBlock"]:has(.ag-kpi) {{ align-items: stretch; }}
+      [data-testid="stColumn"]:has(.ag-kpi) > [data-testid="stVerticalBlock"] {{
+        height: 100%;
+      }}
+      [data-testid="stColumn"]:has(.ag-kpi)
+      [data-testid="stElementContainer"]:has(.ag-kpi) {{
+        flex: 1 0 auto; display: flex; flex-direction: column;
+      }}
+      [data-testid="stColumn"]:has(.ag-kpi) [data-testid="stMarkdown"],
+      [data-testid="stColumn"]:has(.ag-kpi) [data-testid="stMarkdownContainer"] {{
+        flex: 1; display: flex; flex-direction: column;
+      }}
+      .ag-card:has(.ag-kpi) {{ flex: 1;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03); }}
+      [data-testid="stColumn"]:has(.ag-kpi) [data-testid="stButton"] button {{
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+      }}
+      [data-testid="stColumn"]:has(.ag-kpi) [data-testid="stButton"] button:hover {{
+        background-color: #EFF8F3; border-color: {ACCENT}; color: {ACCENT};
+      }}
+      @media (max-width: 768px) {{
+        section[data-testid="stSidebar"][aria-expanded="true"] {{
+          margin: 8px;
+          height: calc(100% - 16px) !important;
+        }}
+      }}
     </style>
     """,
     unsafe_allow_html=True,
