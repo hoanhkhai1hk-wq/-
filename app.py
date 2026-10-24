@@ -38,6 +38,9 @@ st.markdown(
         letter-spacing: -0.015em; color: {INK}; margin: 0 0 0.8rem 0; }}
       .ag-hero-sub {{ font-size: 1.12rem; line-height: 1.75; color: {GRAY};
         max-width: 860px; margin-bottom: 1.6rem; }}
+      .ag-hero {{ background: linear-gradient(135deg, rgba(23,104,93,0.10), rgba(23,104,93,0.03) 55%, rgba(23,104,93,0));
+        border: 1px solid rgba(23,104,93,0.12); border-radius: 20px;
+        padding: 1.5rem 1.7rem 0.2rem 1.7rem; margin-bottom: 1.6rem; }}
       .ag-flow {{ display: flex; align-items: stretch; gap: 0; margin: 0.4rem 0 1.8rem 0; }}
       .ag-flow-step {{ flex: 1; background: {SURFACE}; border: 1px solid #E8E8ED;
         padding: 0.9rem 0.6rem; text-align: center; }}
@@ -572,11 +575,13 @@ def page_home(conn):
     n_disp = conn.execute("SELECT COUNT(*) AS c FROM dispositions").fetchone()["c"]
 
     st.markdown(
+        "<div class='ag-hero'>"
         "<div class='ag-hero-eyebrow'>第三届“兴智杯” · 云智专项赛</div>"
         "<div class='ag-hero-title'>数据先治理，AI 才可信。</div>"
         "<div class='ag-hero-sub'>AgroLake 面向数字农服：登记影像与台账资料，"
         "检查质量、追溯来源，查看农田识别结果并保存复核意见。"
-        "当前为本地原型，治理样例包含合成资料，识别示范使用公开影像。</div>",
+        "当前为本地原型，治理样例包含合成资料，识别示范使用公开影像。</div>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
