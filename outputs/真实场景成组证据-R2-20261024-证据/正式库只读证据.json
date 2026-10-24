@@ -1,0 +1,785 @@
+{
+  "task": "R2-20261024",
+  "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+  "facts": {
+    "image": {
+      "format": "TIFF",
+      "mode": "RGB",
+      "width": 512,
+      "height": 512,
+      "bands": [
+        "R",
+        "G",
+        "B"
+      ],
+      "tiff_tags": {
+        "256": "512",
+        "257": "512",
+        "258": "(8, 8, 8)",
+        "259": "1",
+        "262": "2",
+        "270": "{\"shape\": [512, 512, 3]}",
+        "273": "(272,)",
+        "277": "3",
+        "278": "512",
+        "279": "(786432,)",
+        "282": "1.0",
+        "283": "1.0",
+        "284": "1",
+        "296": "1",
+        "305": "tifffile.py"
+      },
+      "embedded_pixels_equal": true
+    },
+    "annotation_header": {
+      "version": "5.1.1",
+      "flags": {},
+      "imagePath": "hy0717_tile_r37_c15.tif",
+      "imageHeight": 512,
+      "imageWidth": 512
+    },
+    "shape_count": 3,
+    "labels": {
+      "Road": 1,
+      "Field": 1,
+      "Field ridge": 1
+    },
+    "shape_types": {
+      "polygon": 3
+    },
+    "point_count": 13,
+    "pixel_bounds": {
+      "xmin": -5.684341886080802e-14,
+      "xmax": 511.0,
+      "ymin": 0.0,
+      "ymax": 511.0
+    }
+  },
+  "unknowns": {
+    "acquisition_source": null,
+    "original_business_use": null,
+    "license_status": null,
+    "crop": null,
+    "acquisition_date": null,
+    "real_field_id": null,
+    "location": null,
+    "crs": null,
+    "ground_resolution": null,
+    "real_area": null,
+    "annotation_author": null,
+    "semantic_completeness": null
+  },
+  "source_hashes": {},
+  "before_coverage": {
+    "total_scenes": 4,
+    "complete_scenes": 1,
+    "coverage": 0.25,
+    "denominator": "场景清单全部 scene_id",
+    "note": "按当前有效版本归属判定；失配/历史/隔离/重复版本不计入"
+  },
+  "after_coverage": {
+    "total_scenes": 5,
+    "complete_scenes": 1,
+    "coverage": 0.2,
+    "denominator": "场景清单全部 scene_id",
+    "note": "按当前有效版本归属判定；失配/历史/隔离/重复版本不计入"
+  },
+  "before_counts": {
+    "assets": 13,
+    "asset_versions": 14,
+    "import_events": 14,
+    "quality_checks": 114,
+    "dispositions": 6,
+    "rgb_governance_links": 2
+  },
+  "after_counts": {
+    "assets": 16,
+    "asset_versions": 17,
+    "import_events": 17,
+    "quality_checks": 153,
+    "dispositions": 10,
+    "rgb_governance_links": 3
+  },
+  "scene_group": {
+    "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+    "roles": {
+      "image": [
+        {
+          "version_id": 19,
+          "confirm_status": "current",
+          "basis": "rgb_candidate_derived"
+        }
+      ],
+      "attribute": [],
+      "text": [
+        {
+          "version_id": 20,
+          "confirm_status": "current",
+          "basis": "rgb_candidate_derived"
+        },
+        {
+          "version_id": 21,
+          "confirm_status": "current",
+          "basis": "用户指定本地标注文件：邓/hy0717_tile_r37_c15.json"
+        }
+      ]
+    },
+    "missing_roles": [
+      "attribute"
+    ],
+    "issues": []
+  },
+  "link_integrity": {
+    "registered": true,
+    "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+    "image_asset_id": 15,
+    "image_version_id": 19,
+    "stats_asset_id": 16,
+    "stats_version_id": 20,
+    "created_at": "2026-10-24T04:13:53Z",
+    "image_quality": "pass",
+    "stats_quality": "pass",
+    "intact": true
+  },
+  "links": [
+    {
+      "link_id": 3,
+      "job_id": "a82c31ebe8064742b5a9445b909df7d0",
+      "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "image_asset_id": 15,
+      "image_version_id": 19,
+      "stats_asset_id": 16,
+      "stats_version_id": 20,
+      "source_image_sha256": "d3377e631e44e6c70f11a89d2a28c98ae70e694b3eb945e339ff9b921c9fbbda"
+    }
+  ],
+  "versions": [
+    {
+      "version_id": 19,
+      "asset_id": 15,
+      "content_type": "image",
+      "original_filename": "rgb-a82c31ebe8064742b5a9445b909df7d0.png",
+      "source": "rgb_candidate_derived",
+      "intended_use": "rgb_derived_image",
+      "license_status": "",
+      "acquired_at": null,
+      "declared_scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "status": "active",
+      "object_id": "8aa3f137e343a110a7a3823ef3b9a4e0a8c692e579197375adef2285fecbd5a4"
+    },
+    {
+      "version_id": 20,
+      "asset_id": 16,
+      "content_type": "text",
+      "original_filename": "rgb-a82c31ebe8064742b5a9445b909df7d0-stats.json",
+      "source": "rgb_candidate_derived",
+      "intended_use": "rgb_recognition_stats",
+      "license_status": "",
+      "acquired_at": null,
+      "declared_scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "status": "active",
+      "object_id": "aea80f5a5fa2fb212abf161cb7c27bac9b745fd24ac63352699c2329cd849d5d"
+    },
+    {
+      "version_id": 21,
+      "asset_id": 17,
+      "content_type": "text",
+      "original_filename": "hy0717_tile_r37_c15.json",
+      "source": "用户指定本地标注文件：邓/hy0717_tile_r37_c15.json",
+      "intended_use": null,
+      "license_status": null,
+      "acquired_at": null,
+      "declared_scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "status": "active",
+      "object_id": "8890793a40d8a1562e7a3628cef1db98be43ada3188ab4d4428c581ee291e908"
+    }
+  ],
+  "members": [
+    {
+      "member_id": 19,
+      "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "version_id": 19,
+      "role": "image",
+      "basis": "declared",
+      "confirm_status": "auto"
+    },
+    {
+      "member_id": 20,
+      "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "version_id": 20,
+      "role": "text",
+      "basis": "declared",
+      "confirm_status": "auto"
+    },
+    {
+      "member_id": 21,
+      "scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "version_id": 21,
+      "role": "text",
+      "basis": "declared",
+      "confirm_status": "auto"
+    }
+  ],
+  "dispositions": [
+    {
+      "disp_id": 7,
+      "version_id": 19,
+      "action": "supplement_metadata",
+      "operator": "Codex-R2",
+      "reason": "R2：原始素材授权未提供，按要求清空系统默认unknown占位；不声明获得许可。",
+      "before_json": "{\"source\": \"rgb_candidate_derived\", \"source_link\": null, \"license_status\": \"unknown\", \"acquired_at\": null, \"declared_scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\", \"intended_use\": \"rgb_derived_image\"}",
+      "after_json": "{\"license_status\": \"\"}",
+      "related_check_id": null,
+      "created_at": "2026-10-24T12:13:53+08:00"
+    },
+    {
+      "disp_id": 8,
+      "version_id": 19,
+      "action": "recheck",
+      "operator": "Codex-R2",
+      "reason": "复检",
+      "before_json": "{\"recheck_of\": {\"crs_applicability\": 151, \"exact_duplicate\": 147, \"file_not_empty\": 143, \"image_decode\": 148, \"pixel_limit\": 149, \"required_scene\": 146, \"required_source\": 145, \"sharpness\": 150, \"size_limit\": 144}}",
+      "after_json": "{\"status_unchanged\": \"active\"}",
+      "related_check_id": null,
+      "created_at": "2026-10-24T12:13:53+08:00"
+    },
+    {
+      "disp_id": 9,
+      "version_id": 20,
+      "action": "supplement_metadata",
+      "operator": "Codex-R2",
+      "reason": "R2：原始素材授权未提供，按要求清空系统默认unknown占位；不声明获得许可。",
+      "before_json": "{\"source\": \"rgb_candidate_derived\", \"source_link\": null, \"license_status\": \"unknown\", \"acquired_at\": null, \"declared_scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\", \"intended_use\": \"rgb_recognition_stats\"}",
+      "after_json": "{\"license_status\": \"\"}",
+      "related_check_id": null,
+      "created_at": "2026-10-24T12:13:53+08:00"
+    },
+    {
+      "disp_id": 10,
+      "version_id": 20,
+      "action": "recheck",
+      "operator": "Codex-R2",
+      "reason": "复检",
+      "before_json": "{\"recheck_of\": {\"exact_duplicate\": 156, \"file_not_empty\": 152, \"required_scene\": 155, \"required_source\": 154, \"scene_consistency\": 158, \"size_limit\": 153, \"text_parsed\": 157}}",
+      "after_json": "{\"status_unchanged\": \"active\"}",
+      "related_check_id": null,
+      "created_at": "2026-10-24T12:13:53+08:00"
+    }
+  ],
+  "checks": [
+    {
+      "check_id": 143,
+      "version_id": 19,
+      "rule_id": "file_not_empty",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"limit\": 0}",
+      "measured_json": "{\"size\": 321957}",
+      "status": "pass",
+      "reason": "文件非空",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 144,
+      "version_id": 19,
+      "rule_id": "size_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_bytes\": 104857600}",
+      "measured_json": "{\"size\": 321957}",
+      "status": "pass",
+      "reason": "大小在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 145,
+      "version_id": 19,
+      "rule_id": "required_source",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"source\": \"rgb_candidate_derived\"}",
+      "status": "pass",
+      "reason": "来源已登记",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 146,
+      "version_id": 19,
+      "rule_id": "required_scene",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\"}",
+      "status": "pass",
+      "reason": "场景已声明",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 147,
+      "version_id": 19,
+      "rule_id": "exact_duplicate",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "无重复内容",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 148,
+      "version_id": 19,
+      "rule_id": "image_decode",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"width\": 512, \"height\": 512}",
+      "status": "pass",
+      "reason": "图像可解码",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 149,
+      "version_id": 19,
+      "rule_id": "pixel_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_pixels\": 80000000}",
+      "measured_json": "{\"pixels\": 262144}",
+      "status": "pass",
+      "reason": "像素量在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 150,
+      "version_id": 19,
+      "rule_id": "sharpness",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"preview_max_side\": 512}",
+      "measured_json": "{\"laplacian_variance\": 93.601}",
+      "status": "pass",
+      "reason": "预览缩放=1.000，最长边≤512，band=L，阈值 warn<80.0",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 151,
+      "version_id": 19,
+      "rule_id": "crs_applicability",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"crs\": null}",
+      "status": "na",
+      "reason": "普通图像无地理参考，CRS 不适用",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 152,
+      "version_id": 20,
+      "rule_id": "file_not_empty",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"limit\": 0}",
+      "measured_json": "{\"size\": 3512}",
+      "status": "pass",
+      "reason": "文件非空",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 153,
+      "version_id": 20,
+      "rule_id": "size_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_bytes\": 104857600}",
+      "measured_json": "{\"size\": 3512}",
+      "status": "pass",
+      "reason": "大小在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 154,
+      "version_id": 20,
+      "rule_id": "required_source",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"source\": \"rgb_candidate_derived\"}",
+      "status": "pass",
+      "reason": "来源已登记",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 155,
+      "version_id": 20,
+      "rule_id": "required_scene",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\"}",
+      "status": "pass",
+      "reason": "场景已声明",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 156,
+      "version_id": 20,
+      "rule_id": "exact_duplicate",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "无重复内容",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 157,
+      "version_id": 20,
+      "rule_id": "text_parsed",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"notes\": 1}",
+      "status": "pass",
+      "reason": "文本已解析",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 158,
+      "version_id": 20,
+      "rule_id": "scene_consistency",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "场景标识一致",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 159,
+      "version_id": 19,
+      "rule_id": "file_not_empty",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"limit\": 0}",
+      "measured_json": "{\"size\": 321957}",
+      "status": "pass",
+      "reason": "文件非空",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 143
+    },
+    {
+      "check_id": 160,
+      "version_id": 19,
+      "rule_id": "size_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_bytes\": 104857600}",
+      "measured_json": "{\"size\": 321957}",
+      "status": "pass",
+      "reason": "大小在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 144
+    },
+    {
+      "check_id": 161,
+      "version_id": 19,
+      "rule_id": "required_source",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"source\": \"rgb_candidate_derived\"}",
+      "status": "pass",
+      "reason": "来源已登记",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 145
+    },
+    {
+      "check_id": 162,
+      "version_id": 19,
+      "rule_id": "required_scene",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\"}",
+      "status": "pass",
+      "reason": "场景已声明",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 146
+    },
+    {
+      "check_id": 163,
+      "version_id": 19,
+      "rule_id": "exact_duplicate",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "无重复内容",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 147
+    },
+    {
+      "check_id": 164,
+      "version_id": 19,
+      "rule_id": "image_decode",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"width\": 512, \"height\": 512}",
+      "status": "pass",
+      "reason": "图像可解码",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 148
+    },
+    {
+      "check_id": 165,
+      "version_id": 19,
+      "rule_id": "pixel_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_pixels\": 80000000}",
+      "measured_json": "{\"pixels\": 262144}",
+      "status": "pass",
+      "reason": "像素量在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 149
+    },
+    {
+      "check_id": 166,
+      "version_id": 19,
+      "rule_id": "sharpness",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"preview_max_side\": 512}",
+      "measured_json": "{\"laplacian_variance\": 93.601}",
+      "status": "pass",
+      "reason": "预览缩放=1.000，最长边≤512，band=L，阈值 warn<80.0",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 150
+    },
+    {
+      "check_id": 167,
+      "version_id": 19,
+      "rule_id": "crs_applicability",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"crs\": null}",
+      "status": "na",
+      "reason": "普通图像无地理参考，CRS 不适用",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 151
+    },
+    {
+      "check_id": 168,
+      "version_id": 20,
+      "rule_id": "file_not_empty",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"limit\": 0}",
+      "measured_json": "{\"size\": 3512}",
+      "status": "pass",
+      "reason": "文件非空",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 152
+    },
+    {
+      "check_id": 169,
+      "version_id": 20,
+      "rule_id": "size_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_bytes\": 104857600}",
+      "measured_json": "{\"size\": 3512}",
+      "status": "pass",
+      "reason": "大小在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 153
+    },
+    {
+      "check_id": 170,
+      "version_id": 20,
+      "rule_id": "required_source",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"source\": \"rgb_candidate_derived\"}",
+      "status": "pass",
+      "reason": "来源已登记",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 154
+    },
+    {
+      "check_id": 171,
+      "version_id": 20,
+      "rule_id": "required_scene",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\"}",
+      "status": "pass",
+      "reason": "场景已声明",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 155
+    },
+    {
+      "check_id": 172,
+      "version_id": 20,
+      "rule_id": "exact_duplicate",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "无重复内容",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 156
+    },
+    {
+      "check_id": 173,
+      "version_id": 20,
+      "rule_id": "text_parsed",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"notes\": 1}",
+      "status": "pass",
+      "reason": "文本已解析",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 157
+    },
+    {
+      "check_id": 174,
+      "version_id": 20,
+      "rule_id": "scene_consistency",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "场景标识一致",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": 158
+    },
+    {
+      "check_id": 175,
+      "version_id": 21,
+      "rule_id": "file_not_empty",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"limit\": 0}",
+      "measured_json": "{\"size\": 440924}",
+      "status": "pass",
+      "reason": "文件非空",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 176,
+      "version_id": 21,
+      "rule_id": "size_limit",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{\"max_bytes\": 104857600}",
+      "measured_json": "{\"size\": 440924}",
+      "status": "pass",
+      "reason": "大小在上限内",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 177,
+      "version_id": 21,
+      "rule_id": "required_source",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"source\": \"用户指定本地标注文件：邓/hy0717_tile_r37_c15.json\"}",
+      "status": "pass",
+      "reason": "来源已登记",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 178,
+      "version_id": 21,
+      "rule_id": "required_scene",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"scene_id\": \"RGB-a82c31ebe8064742b5a9445b909df7d0\"}",
+      "status": "pass",
+      "reason": "场景已声明",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 179,
+      "version_id": 21,
+      "rule_id": "exact_duplicate",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "无重复内容",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 180,
+      "version_id": 21,
+      "rule_id": "text_parsed",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": "{\"notes\": 1}",
+      "status": "pass",
+      "reason": "文本已解析",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    },
+    {
+      "check_id": 181,
+      "version_id": 21,
+      "rule_id": "scene_consistency",
+      "rule_version": "QR-1.0.0",
+      "params_json": "{}",
+      "measured_json": null,
+      "status": "pass",
+      "reason": "场景标识一致",
+      "checked_at": "2026-10-24T12:13:53+08:00",
+      "recheck_of_check_id": null
+    }
+  ],
+  "events": [
+    {
+      "event_id": 19,
+      "imported_at": "2026-10-24T12:13:53+08:00",
+      "asset_id": 15,
+      "version_id": 19,
+      "original_filename": "rgb-a82c31ebe8064742b5a9445b909df7d0.png",
+      "declared_source": "rgb_candidate_derived",
+      "declared_scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "content_sha256": "8aa3f137e343a110a7a3823ef3b9a4e0a8c692e579197375adef2285fecbd5a4",
+      "object_relpath": "objects/8a/8aa3f137e343a110a7a3823ef3b9a4e0a8c692e579197375adef2285fecbd5a4",
+      "size_bytes": 321957,
+      "event_type": "new_asset",
+      "notes": null
+    },
+    {
+      "event_id": 20,
+      "imported_at": "2026-10-24T12:13:53+08:00",
+      "asset_id": 16,
+      "version_id": 20,
+      "original_filename": "rgb-a82c31ebe8064742b5a9445b909df7d0-stats.json",
+      "declared_source": "rgb_candidate_derived",
+      "declared_scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "content_sha256": "aea80f5a5fa2fb212abf161cb7c27bac9b745fd24ac63352699c2329cd849d5d",
+      "object_relpath": "objects/ae/aea80f5a5fa2fb212abf161cb7c27bac9b745fd24ac63352699c2329cd849d5d",
+      "size_bytes": 3512,
+      "event_type": "new_asset",
+      "notes": null
+    },
+    {
+      "event_id": 21,
+      "imported_at": "2026-10-24T12:13:53+08:00",
+      "asset_id": 17,
+      "version_id": 21,
+      "original_filename": "hy0717_tile_r37_c15.json",
+      "declared_source": "用户指定本地标注文件：邓/hy0717_tile_r37_c15.json",
+      "declared_scene_id": "RGB-a82c31ebe8064742b5a9445b909df7d0",
+      "content_sha256": "8890793a40d8a1562e7a3628cef1db98be43ada3188ab4d4428c581ee291e908",
+      "object_relpath": "objects/88/8890793a40d8a1562e7a3628cef1db98be43ada3188ab4d4428c581ee291e908",
+      "size_bytes": 440924,
+      "event_type": "new_asset",
+      "notes": null
+    }
+  ],
+  "database_sha256": "dfba24e17426b17dc9d9bcc1e76ad834e9a1f1ebca21ef0a369f880b4cd804d8",
+  "previous_records_and_protected_files_unchanged": true
+}
