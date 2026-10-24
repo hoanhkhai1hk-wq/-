@@ -1,0 +1,460 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>R2b正式库只读证据</title><style>body{max-width:1100px;margin:32px auto;font:16px sans-serif}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><h1>R2b 正式库只读审计导出</h1><p>非应用原页面。覆盖率与质检通过率是不同指标；完整资料仍可能质检阻断。</p><pre>{
+  &quot;description&quot;: &quot;正式库只读审计导出；非应用原页面&quot;,
+  &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+  &quot;source&quot;: &quot;由原始标注 hy0717_tile_r37_c15.json 计算派生&quot;,
+  &quot;backup_sha256&quot;: &quot;dfba24e17426b17dc9d9bcc1e76ad834e9a1f1ebca21ef0a369f880b4cd804d8&quot;,
+  &quot;annotation_sha256&quot;: &quot;8890793a40d8a1562e7a3628cef1db98be43ada3188ab4d4428c581ee291e908&quot;,
+  &quot;csv_sha256&quot;: &quot;42fe80fd0c9602333b51c756cd5e86f757b1cd3d6a9d3d246c3395d65a9a51cb&quot;,
+  &quot;rows&quot;: [
+    {
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;类别&quot;: &quot;田块&quot;,
+      &quot;多边形数&quot;: 1,
+      &quot;像素面积&quot;: 113361,
+      &quot;像素面积占比&quot;: &quot;0.432437896729&quot;
+    },
+    {
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;类别&quot;: &quot;田埂&quot;,
+      &quot;多边形数&quot;: 1,
+      &quot;像素面积&quot;: 9380,
+      &quot;像素面积占比&quot;: &quot;0.035781860352&quot;
+    },
+    {
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;类别&quot;: &quot;道路&quot;,
+      &quot;多边形数&quot;: 1,
+      &quot;像素面积&quot;: 63332,
+      &quot;像素面积占比&quot;: &quot;0.241592407227&quot;
+    }
+  ],
+  &quot;rasterization&quot;: {
+    &quot;library&quot;: &quot;Pillow ImageDraw.polygon&quot;,
+    &quot;pillow_version&quot;: &quot;12.3.0&quot;,
+    &quot;canvas_width&quot;: 512,
+    &quot;canvas_height&quot;: 512,
+    &quot;denominator_pixels&quot;: 262144,
+    &quot;coordinate_handling&quot;: &quot;原始浮点坐标原样传入；不修改源坐标；隐式闭合，画布外裁剪；边界按Pillow填充规则&quot;,
+    &quot;class_handling&quot;: &quot;同类取并集；跨类重叠分别计入各类，不决定类别优先级&quot;,
+    &quot;coverage_depth_histogram&quot;: {
+      &quot;0&quot;: 76489,
+      &quot;1&quot;: 185237,
+      &quot;2&quot;: 418
+    },
+    &quot;unannotated_pixels&quot;: 76489,
+    &quot;cross_class_overlap_pixels&quot;: 418,
+    &quot;label_mapping&quot;: {
+      &quot;Field&quot;: &quot;田块&quot;,
+      &quot;Field ridge&quot;: &quot;田埂&quot;,
+      &quot;Road&quot;: &quot;道路&quot;
+    }
+  },
+  &quot;preflight&quot;: {
+    &quot;recognized_columns&quot;: {
+      &quot;scene_id&quot;: &quot;scene_id&quot;,
+      &quot;category&quot;: &quot;类别&quot;
+    },
+    &quot;unrecognized_columns&quot;: [
+      &quot;多边形数&quot;,
+      &quot;像素面积&quot;,
+      &quot;像素面积占比&quot;
+    ],
+    &quot;missing_business_columns&quot;: [
+      &quot;field_id&quot;,
+      &quot;crop&quot;,
+      &quot;area&quot;,
+      &quot;area_unit&quot;
+    ],
+    &quot;policy&quot;: &quot;按原样正规导入，保留既有规则的阻断结论；不补作物、地块或实物面积，覆盖率不等同质检通过&quot;
+  },
+  &quot;before_coverage&quot;: {
+    &quot;total_scenes&quot;: 5,
+    &quot;complete_scenes&quot;: 1,
+    &quot;coverage&quot;: 0.2,
+    &quot;denominator&quot;: &quot;场景清单全部 scene_id&quot;,
+    &quot;note&quot;: &quot;按当前有效版本归属判定；失配/历史/隔离/重复版本不计入&quot;
+  },
+  &quot;after_coverage&quot;: {
+    &quot;total_scenes&quot;: 5,
+    &quot;complete_scenes&quot;: 2,
+    &quot;coverage&quot;: 0.4,
+    &quot;denominator&quot;: &quot;场景清单全部 scene_id&quot;,
+    &quot;note&quot;: &quot;按当前有效版本归属判定；失配/历史/隔离/重复版本不计入&quot;
+  },
+  &quot;before_counts&quot;: {
+    &quot;assets&quot;: 16,
+    &quot;asset_versions&quot;: 17,
+    &quot;import_events&quot;: 17,
+    &quot;quality_checks&quot;: 153,
+    &quot;dispositions&quot;: 10,
+    &quot;scene_members&quot;: 17,
+    &quot;attribute_records&quot;: 3
+  },
+  &quot;after_counts&quot;: {
+    &quot;assets&quot;: 17,
+    &quot;asset_versions&quot;: 18,
+    &quot;import_events&quot;: 18,
+    &quot;quality_checks&quot;: 163,
+    &quot;dispositions&quot;: 10,
+    &quot;scene_members&quot;: 18,
+    &quot;attribute_records&quot;: 6
+  },
+  &quot;members&quot;: {
+    &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+    &quot;roles&quot;: {
+      &quot;image&quot;: [
+        {
+          &quot;version_id&quot;: 19,
+          &quot;confirm_status&quot;: &quot;current&quot;,
+          &quot;basis&quot;: &quot;rgb_candidate_derived&quot;
+        }
+      ],
+      &quot;attribute&quot;: [
+        {
+          &quot;version_id&quot;: 22,
+          &quot;confirm_status&quot;: &quot;current&quot;,
+          &quot;basis&quot;: &quot;由原始标注 hy0717_tile_r37_c15.json 计算派生&quot;
+        }
+      ],
+      &quot;text&quot;: [
+        {
+          &quot;version_id&quot;: 20,
+          &quot;confirm_status&quot;: &quot;current&quot;,
+          &quot;basis&quot;: &quot;rgb_candidate_derived&quot;
+        },
+        {
+          &quot;version_id&quot;: 21,
+          &quot;confirm_status&quot;: &quot;current&quot;,
+          &quot;basis&quot;: &quot;用户指定本地标注文件：邓/hy0717_tile_r37_c15.json&quot;
+        }
+      ]
+    },
+    &quot;missing_roles&quot;: [],
+    &quot;issues&quot;: []
+  },
+  &quot;member_records&quot;: [
+    {
+      &quot;member_id&quot;: 22,
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;version_id&quot;: 22,
+      &quot;role&quot;: &quot;attribute&quot;,
+      &quot;basis&quot;: &quot;declared&quot;,
+      &quot;time_condition&quot;: null,
+      &quot;confirm_status&quot;: &quot;auto&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;
+    }
+  ],
+  &quot;version&quot;: {
+    &quot;version_id&quot;: 22,
+    &quot;asset_id&quot;: 18,
+    &quot;version_no&quot;: 1,
+    &quot;content_type&quot;: &quot;attribute&quot;,
+    &quot;object_id&quot;: &quot;42fe80fd0c9602333b51c756cd5e86f757b1cd3d6a9d3d246c3395d65a9a51cb&quot;,
+    &quot;original_filename&quot;: &quot;hy0717_tile_r37_c15-derived-pixel-attributes.csv&quot;,
+    &quot;source&quot;: &quot;由原始标注 hy0717_tile_r37_c15.json 计算派生&quot;,
+    &quot;source_link&quot;: null,
+    &quot;license_status&quot;: null,
+    &quot;acquired_at&quot;: null,
+    &quot;declared_scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+    &quot;intended_use&quot;: null,
+    &quot;width&quot;: null,
+    &quot;height&quot;: null,
+    &quot;bands&quot;: null,
+    &quot;bitdepth&quot;: null,
+    &quot;status&quot;: &quot;active&quot;,
+    &quot;duplicate_of_version_id&quot;: null,
+    &quot;created_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+    &quot;updated_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;
+  },
+  &quot;attributes&quot;: [
+    {
+      &quot;record_id&quot;: 4,
+      &quot;version_id&quot;: 22,
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;field_id&quot;: null,
+      &quot;crop&quot;: null,
+      &quot;area_raw&quot;: null,
+      &quot;area_unit_raw&quot;: null,
+      &quot;area_m2&quot;: null,
+      &quot;row_index&quot;: 0,
+      &quot;issues&quot;: &quot;面积值缺失&quot;,
+      &quot;category_raw&quot;: &quot;田块&quot;,
+      &quot;category_std&quot;: &quot;FIELD&quot;
+    },
+    {
+      &quot;record_id&quot;: 5,
+      &quot;version_id&quot;: 22,
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;field_id&quot;: null,
+      &quot;crop&quot;: null,
+      &quot;area_raw&quot;: null,
+      &quot;area_unit_raw&quot;: null,
+      &quot;area_m2&quot;: null,
+      &quot;row_index&quot;: 1,
+      &quot;issues&quot;: &quot;面积值缺失&quot;,
+      &quot;category_raw&quot;: &quot;田埂&quot;,
+      &quot;category_std&quot;: &quot;FIELD_BOUNDARY&quot;
+    },
+    {
+      &quot;record_id&quot;: 6,
+      &quot;version_id&quot;: 22,
+      &quot;scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;field_id&quot;: null,
+      &quot;crop&quot;: null,
+      &quot;area_raw&quot;: null,
+      &quot;area_unit_raw&quot;: null,
+      &quot;area_m2&quot;: null,
+      &quot;row_index&quot;: 2,
+      &quot;issues&quot;: &quot;面积值缺失&quot;,
+      &quot;category_raw&quot;: &quot;道路&quot;,
+      &quot;category_std&quot;: &quot;ROAD&quot;
+    }
+  ],
+  &quot;import_events&quot;: [
+    {
+      &quot;event_id&quot;: 22,
+      &quot;imported_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;asset_id&quot;: 18,
+      &quot;version_id&quot;: 22,
+      &quot;original_filename&quot;: &quot;hy0717_tile_r37_c15-derived-pixel-attributes.csv&quot;,
+      &quot;declared_source&quot;: &quot;由原始标注 hy0717_tile_r37_c15.json 计算派生&quot;,
+      &quot;declared_scene_id&quot;: &quot;RGB-a82c31ebe8064742b5a9445b909df7d0&quot;,
+      &quot;content_sha256&quot;: &quot;42fe80fd0c9602333b51c756cd5e86f757b1cd3d6a9d3d246c3395d65a9a51cb&quot;,
+      &quot;object_relpath&quot;: &quot;objects/42/42fe80fd0c9602333b51c756cd5e86f757b1cd3d6a9d3d246c3395d65a9a51cb&quot;,
+      &quot;size_bytes&quot;: 266,
+      &quot;event_type&quot;: &quot;new_asset&quot;,
+      &quot;notes&quot;: null
+    }
+  ],
+  &quot;quality_checks&quot;: [
+    {
+      &quot;check_id&quot;: 182,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;file_not_empty&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{\&quot;limit\&quot;: 0}&quot;,
+      &quot;measured_json&quot;: &quot;{\&quot;size\&quot;: 266}&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;文件非空&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 183,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;size_limit&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{\&quot;max_bytes\&quot;: 104857600}&quot;,
+      &quot;measured_json&quot;: &quot;{\&quot;size\&quot;: 266}&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;大小在上限内&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 184,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;required_source&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: &quot;{\&quot;source\&quot;: \&quot;由原始标注 hy0717_tile_r37_c15.json 计算派生\&quot;}&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;来源已登记&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 185,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;required_scene&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: &quot;{\&quot;scene_id\&quot;: \&quot;RGB-a82c31ebe8064742b5a9445b909df7d0\&quot;}&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;场景已声明&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 186,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;exact_duplicate&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: null,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;无重复内容&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 187,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;csv_required_columns&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: null,
+      &quot;status&quot;: &quot;block&quot;,
+      &quot;reason&quot;: &quot;缺少必填列：[&#x27;field_id&#x27;, &#x27;crop&#x27;, &#x27;area&#x27;, &#x27;area_unit&#x27;]（识别到 [&#x27;scene_id&#x27;, &#x27;category&#x27;]）&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 188,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;csv_has_rows&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: &quot;{\&quot;rows\&quot;: 3}&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;3 行数据&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 189,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;csv_area_units&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: &quot;{\&quot;error_rows\&quot;: [4, 5, 6]}&quot;,
+      &quot;status&quot;: &quot;block&quot;,
+      &quot;reason&quot;: &quot;3 行面积/单位或类别错误：[4, 5, 6]&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 190,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;csv_required_values&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: null,
+      &quot;status&quot;: &quot;block&quot;,
+      &quot;reason&quot;: &quot;必填值缺失：3 行必填值缺失：[{&#x27;row&#x27;: 0, &#x27;fields&#x27;: [&#x27;field_id&#x27;, &#x27;crop&#x27;]}, {&#x27;row&#x27;: 1, &#x27;fields&#x27;: [&#x27;field_id&#x27;, &#x27;crop&#x27;]}, {&#x27;row&#x27;: 2, &#x27;fields&#x27;: [&#x27;field_id&#x27;, &#x27;crop&#x27;]}]&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    },
+    {
+      &quot;check_id&quot;: 191,
+      &quot;version_id&quot;: 22,
+      &quot;rule_id&quot;: &quot;csv_scene_consistency&quot;,
+      &quot;rule_version&quot;: &quot;QR-1.0.0&quot;,
+      &quot;params_json&quot;: &quot;{}&quot;,
+      &quot;measured_json&quot;: null,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;reason&quot;: &quot;CSV 场景标识一致&quot;,
+      &quot;checked_at&quot;: &quot;2026-10-24T12:34:51+08:00&quot;,
+      &quot;recheck_of_check_id&quot;: null
+    }
+  ],
+  &quot;overall_quality&quot;: &quot;block&quot;,
+  &quot;dispositions&quot;: [
+    {
+      &quot;disp_id&quot;: 1,
+      &quot;version_id&quot;: 3,
+      &quot;action&quot;: &quot;isolate&quot;,
+      &quot;operator&quot;: &quot;operator&quot;,
+      &quot;created_at&quot;: &quot;2026-10-15T01:14:01+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 2,
+      &quot;version_id&quot;: 3,
+      &quot;action&quot;: &quot;unisolate&quot;,
+      &quot;operator&quot;: &quot;Codex-合成页面验收&quot;,
+      &quot;created_at&quot;: &quot;2026-10-15T01:14:32+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 3,
+      &quot;version_id&quot;: 3,
+      &quot;action&quot;: &quot;isolate&quot;,
+      &quot;operator&quot;: &quot;Codex-刷新按钮验收&quot;,
+      &quot;created_at&quot;: &quot;2026-10-15T01:29:52+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 4,
+      &quot;version_id&quot;: 3,
+      &quot;action&quot;: &quot;unisolate&quot;,
+      &quot;operator&quot;: &quot;Codex-刷新按钮验收&quot;,
+      &quot;created_at&quot;: &quot;2026-10-15T01:30:25+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 5,
+      &quot;version_id&quot;: 7,
+      &quot;action&quot;: &quot;mark_duplicate&quot;,
+      &quot;operator&quot;: &quot;operator&quot;,
+      &quot;created_at&quot;: &quot;2026-10-15T13:28:23+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 6,
+      &quot;version_id&quot;: 17,
+      &quot;action&quot;: &quot;isolate&quot;,
+      &quot;operator&quot;: &quot;黄伟浩&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24T11:59:01+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 7,
+      &quot;version_id&quot;: 19,
+      &quot;action&quot;: &quot;supplement_metadata&quot;,
+      &quot;operator&quot;: &quot;Codex-R2&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24T12:13:53+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 8,
+      &quot;version_id&quot;: 19,
+      &quot;action&quot;: &quot;recheck&quot;,
+      &quot;operator&quot;: &quot;Codex-R2&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24T12:13:53+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 9,
+      &quot;version_id&quot;: 20,
+      &quot;action&quot;: &quot;supplement_metadata&quot;,
+      &quot;operator&quot;: &quot;Codex-R2&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24T12:13:53+08:00&quot;
+    },
+    {
+      &quot;disp_id&quot;: 10,
+      &quot;version_id&quot;: 20,
+      &quot;action&quot;: &quot;recheck&quot;,
+      &quot;operator&quot;: &quot;Codex-R2&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24T12:13:53+08:00&quot;
+    }
+  ],
+  &quot;disposition_actions&quot;: {
+    &quot;isolate&quot;: 3,
+    &quot;unisolate&quot;: 2,
+    &quot;mark_duplicate&quot;: 1,
+    &quot;supplement_metadata&quot;: 2,
+    &quot;recheck&quot;: 2
+  },
+  &quot;preserved_business_rows&quot;: {
+    &quot;meta&quot;: 1,
+    &quot;objects&quot;: 16,
+    &quot;assets&quot;: 16,
+    &quot;asset_versions&quot;: 17,
+    &quot;import_events&quot;: 17,
+    &quot;attribute_records&quot;: 3,
+    &quot;text_records&quot;: 9,
+    &quot;quality_checks&quot;: 153,
+    &quot;dispositions&quot;: 10,
+    &quot;meta_history&quot;: 2,
+    &quot;scenes&quot;: 6,
+    &quot;scene_members&quot;: 17,
+    &quot;rec_meta&quot;: 1,
+    &quot;rec_inputs&quot;: 1,
+    &quot;rec_requests&quot;: 2,
+    &quot;rec_jobs&quot;: 2,
+    &quot;rec_runs&quot;: 2,
+    &quot;rec_regions&quot;: 1444,
+    &quot;rec_class_counts&quot;: 8,
+    &quot;rec_artifacts&quot;: 10,
+    &quot;rec_reviews&quot;: 0,
+    &quot;qa_runs&quot;: 9,
+    &quot;rec_governance_links&quot;: 1,
+    &quot;rec_corrections&quot;: 0,
+    &quot;rgb_governance_links&quot;: 3
+  },
+  &quot;protected_file_count&quot;: 34,
+  &quot;boundary&quot;: &quot;覆盖率只统计影像/属性/文本资料类别；像素统计CSV仍有既有农业字段缺失阻断，未声称质检通过或农业精度提高&quot;
+}</pre></html>
